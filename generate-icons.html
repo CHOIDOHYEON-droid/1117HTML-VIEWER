@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이콘 생성기</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item p {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HTML 뷰어 아이콘 생성기</h1>
+        <p>아래 버튼을 클릭하여 앱 아이콘을 다운로드하세요</p>
+
+        <div class="preview">
+            <div class="preview-item">
+                <canvas id="canvas192" width="192" height="192"></canvas>
+                <p>192x192 아이콘</p>
+                <button onclick="downloadIcon(192)">192x192 다운로드</button>
+            </div>
+            <div class="preview-item">
+                <canvas id="canvas512" width="512" height="512"></canvas>
+                <p>512x512 아이콘</p>
+                <button onclick="downloadIcon(512)">512x512 다운로드</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9ff; border-radius: 10px;">
+            <p style="color: #666; font-size: 14px;">
+                다운로드한 아이콘 파일을 "HTML 뷰어" 폴더에 저장하세요:
+            </p>
+            <p style="color: #667eea; font-weight: 600; margin-top: 10px;">
+                icon-192.png<br>
+                icon-512.png
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+
+            // 배경 그라디언트
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // HTML 문서 아이콘
+            const padding = size * 0.15;
+            const docWidth = size * 0.5;
+            const docHeight = size * 0.65;
+            const docX = (size - docWidth) / 2;
+            const docY = (size - docHeight) / 2;
+            const cornerSize = size * 0.1;
+
+            // 문서 본체
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.moveTo(docX, docY + cornerSize);
+            ctx.lineTo(docX + docWidth - cornerSize, docY + cornerSize);
+            ctx.lineTo(docX + docWidth, docY + cornerSize * 2);
+            ctx.lineTo(docX + docWidth, docY + docHeight);
+            ctx.lineTo(docX, docY + docHeight);
+            ctx.closePath();
+            ctx.fill();
+
+            // 모서리 접힌 부분
+            ctx.fillStyle = '#f0f0f0';
+            ctx.beginPath();
+            ctx.moveTo(docX + docWidth - cornerSize, docY + cornerSize);
+            ctx.lineTo(docX + docWidth, docY + cornerSize * 2);
+            ctx.lineTo(docX + docWidth - cornerSize, docY + cornerSize * 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // HTML 텍스트
+            ctx.fillStyle = '#667eea';
+            ctx.font = `bold ${size * 0.12}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('HTML', size / 2, size / 2 + size * 0.05);
+
+            // 3D 모델 표시 (작은 큐브)
+            const cubeSize = size * 0.08;
+            const cubeX = size / 2 - cubeSize;
+            const cubeY = size / 2 - size * 0.15;
+
+            // 큐브 그리기
+            ctx.fillStyle = '#43e97b';
+            ctx.fillRect(cubeX, cubeY, cubeSize, cubeSize);
+
+            ctx.fillStyle = '#38f9d7';
+            ctx.beginPath();
+            ctx.moveTo(cubeX + cubeSize, cubeY);
+            ctx.lineTo(cubeX + cubeSize + cubeSize * 0.5, cubeY - cubeSize * 0.5);
+            ctx.lineTo(cubeX + cubeSize + cubeSize * 0.5, cubeY - cubeSize * 0.5 + cubeSize);
+            ctx.lineTo(cubeX + cubeSize, cubeY + cubeSize);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#2dd4bf';
+            ctx.beginPath();
+            ctx.moveTo(cubeX, cubeY);
+            ctx.lineTo(cubeX + cubeSize * 0.5, cubeY - cubeSize * 0.5);
+            ctx.lineTo(cubeX + cubeSize + cubeSize * 0.5, cubeY - cubeSize * 0.5);
+            ctx.lineTo(cubeX + cubeSize, cubeY);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // 아이콘 그리기
+        drawIcon(document.getElementById('canvas192'), 192);
+        drawIcon(document.getElementById('canvas512'), 512);
+
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "appId": "com.htmlviewer.app",
+  "appName": "HTML Viewer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>파일 열기 중...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .loading-container {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .error {
+            background: white;
+            color: #dc3545;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+
+        .back-button {
+            margin-top: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container" id="loadingContainer">
+        <div class="spinner"></div>
+        <h1>HTML 파일 열기 중...</h1>
+        <p>잠시만 기다려주세요</p>
+    </div>
+
+    <script>
+        async function handleSharedFile() {
+            try {
+                // FormData에서 파일 가져오기
+                const formData = await getFormData();
+
+                if (!formData) {
+                    // GET 요청인 경우 (URL 파라미터로 전달된 경우)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const fileName = urlParams.get('title') || urlParams.get('text');
+
+                    if (fileName) {
+                        showError('파일을 받지 못했습니다. 다시 시도해주세요.');
+                        return;
+                    }
+
+                    // 아무 파라미터도 없으면 메인 페이지로
+                    window.location.href = '/index.html';
+                    return;
+                }
+
+                const file = formData.get('file');
+
+                if (!file || !(file instanceof File)) {
+                    showError('파일을 받지 못했습니다. 다시 시도해주세요.');
+                    return;
+                }
+
+                // HTML 파일인지 확인
+                if (!file.name.match(/\.(html|htm)$/i) && file.type !== 'text/html') {
+                    showError('HTML 파일만 열 수 있습니다.');
+                    return;
+                }
+
+                // 파일 읽기
+                const content = await file.text();
+
+                // 최근 파일 목록에 추가
+                addToRecent(file.name, content);
+
+                // Blob URL 생성
+                const blob = new Blob([content], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+
+                // 새 창에서 열기
+                window.open(url, '_blank');
+
+                // 잠시 후 메인 페이지로 이동
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 500);
+
+            } catch (error) {
+                console.error('파일 처리 오류:', error);
+                showError('파일을 여는 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function getFormData() {
+            // POST 요청의 경우만 처리
+            if (window.location.search || window.location.hash) {
+                return null;
+            }
+
+            // Service Worker에서 전달받은 데이터 확인
+            if (window.sharedFile) {
+                const formData = new FormData();
+                formData.append('file', window.sharedFile);
+                return formData;
+            }
+
+            return null;
+        }
+
+        function addToRecent(fileName, content) {
+            try {
+                const MAX_RECENT_FILES = 10;
+                let recent = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+
+                // 중복 제거
+                recent = recent.filter(item => item.name !== fileName);
+
+                // 새 항목 추가
+                recent.unshift({
+                    name: fileName,
+                    content: content,
+                    date: new Date().toISOString()
+                });
+
+                // 최대 개수 제한
+                if (recent.length > MAX_RECENT_FILES) {
+                    recent = recent.slice(0, MAX_RECENT_FILES);
+                }
+
+                localStorage.setItem('recentFiles', JSON.stringify(recent));
+            } catch (error) {
+                console.error('최근 파일 저장 실패:', error);
+            }
+        }
+
+        function showError(message) {
+            const container = document.getElementById('loadingContainer');
+            container.innerHTML = `
+                <div class="error">
+                    <h1>⚠️ 오류</h1>
+                    <p>${message}</p>
+                    <a href="/index.html" class="back-button">메인 페이지로 돌아가기</a>
+                </div>
+            `;
+        }
+
+        // 페이지 로드 시 실행
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', handleSharedFile);
+        } else {
+            handleSharedFile();
+        }
+    </script>
+</body>
+</html>

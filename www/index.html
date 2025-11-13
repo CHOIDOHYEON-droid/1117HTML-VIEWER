@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HTML 뷰어">
+    <title>HTML 뷰어</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: #5a6c7d;
+        }
+
+        .upload-section {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .upload-box {
+            border: 2px dashed #cfd8dc;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        .upload-box:hover,
+        .upload-box:active {
+            background: #f8f9fa;
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+
+        .upload-box svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            fill: #3498db;
+        }
+
+        .upload-box h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .upload-box p {
+            color: #5a6c7d;
+            font-size: 0.95em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .recent-section {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .recent-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recent-list {
+            list-style: none;
+        }
+
+        .recent-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .recent-item:hover,
+        .recent-item:active {
+            background: #ffffff;
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+
+        .recent-item-info {
+            flex: 1;
+        }
+
+        .recent-item-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .recent-item-date {
+            font-size: 0.85em;
+            color: #95a5a6;
+        }
+
+        .recent-item-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .recent-item-delete:active {
+            background: #c0392b;
+            transform: scale(0.95);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #95a5a6;
+            padding: 30px;
+            font-size: 0.95em;
+        }
+
+        .install-prompt {
+            background: #3498db;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.3);
+            display: none;
+        }
+
+        .install-prompt.show {
+            display: block;
+        }
+
+        .install-prompt p {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .install-prompt button {
+            background: white;
+            color: #3498db;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .install-prompt button:hover {
+            background: #f8f9fa;
+        }
+
+        .install-prompt button:active {
+            transform: scale(0.95);
+        }
+
+        .clear-all-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .clear-all-btn:hover {
+            background: #c0392b;
+        }
+
+        .clear-all-btn:active {
+            background: #a93226;
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .upload-section,
+            .recent-section {
+                padding: 20px;
+            }
+
+            .upload-box {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>HTML 뷰어</h1>
+            <p>치과 3D 모델 뷰어</p>
+        </div>
+
+        <div class="install-prompt" id="installPrompt">
+            <p>앱을 홈 화면에 추가하여 더 편리하게 사용하세요!</p>
+            <button onclick="showInstallInstructions()">설치 방법 보기</button>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,19V15H15L11.5,11L8,15H10V19Z"/>
+                </svg>
+                <h2>HTML 파일 선택</h2>
+                <p>탭하여 파일을 선택하세요</p>
+            </div>
+            <input type="file" id="fileInput" accept=".html,.htm" multiple>
+        </div>
+
+        <div class="recent-section">
+            <h3>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/>
+                </svg>
+                최근 파일
+            </h3>
+            <ul class="recent-list" id="recentList"></ul>
+            <button class="clear-all-btn" onclick="clearAllRecent()" id="clearAllBtn" style="display: none;">
+                전체 삭제
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@5/dist/esm/index.js';
+        import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@5/dist/esm/index.js';
+        import { Filesystem, Directory } from 'https://cdn.jsdelivr.net/npm/@capacitor/filesystem@5/dist/esm/index.js';
+
+        const MAX_RECENT_FILES = 10;
+        let deferredPrompt;
+        const isNative = Capacitor.isNativePlatform();
+
+        // PWA 설치 프롬프트
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        function showInstallInstructions() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('installPrompt').classList.remove('show');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                // iOS용 안내
+                alert('Safari에서:\n1. 하단의 공유 버튼을 탭하세요\n2. "홈 화면에 추가"를 선택하세요\n3. "추가"를 탭하세요');
+            }
+        }
+
+        // 파일 선택
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const blob = new Blob([content], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+
+                    // 최근 파일 목록에 추가
+                    addToRecent(file.name, content);
+
+                    // 새 탭에서 열기
+                    window.open(url, '_blank');
+                };
+                reader.readAsText(file);
+            });
+
+            // 입력 초기화
+            event.target.value = '';
+        }
+
+        // 최근 파일 관리
+        function getRecentFiles() {
+            const recent = localStorage.getItem('recentFiles');
+            return recent ? JSON.parse(recent) : [];
+        }
+
+        function saveRecentFiles(files) {
+            localStorage.setItem('recentFiles', JSON.stringify(files));
+        }
+
+        function addToRecent(fileName, content) {
+            let recent = getRecentFiles();
+
+            // 중복 제거
+            recent = recent.filter(item => item.name !== fileName);
+
+            // 새 항목 추가
+            recent.unshift({
+                name: fileName,
+                content: content,
+                date: new Date().toISOString()
+            });
+
+            // 최대 개수 제한
+            if (recent.length > MAX_RECENT_FILES) {
+                recent = recent.slice(0, MAX_RECENT_FILES);
+            }
+
+            saveRecentFiles(recent);
+            displayRecentFiles();
+        }
+
+        function openRecentFile(index) {
+            const recent = getRecentFiles();
+            if (index >= 0 && index < recent.length) {
+                const file = recent[index];
+                const blob = new Blob([file.content], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+
+                // 목록 상단으로 이동
+                addToRecent(file.name, file.content);
+            }
+        }
+
+        function deleteRecentFile(index, event) {
+            event.stopPropagation();
+
+            if (confirm('이 파일을 목록에서 삭제하시겠습니까?')) {
+                let recent = getRecentFiles();
+                recent.splice(index, 1);
+                saveRecentFiles(recent);
+                displayRecentFiles();
+            }
+        }
+
+        function clearAllRecent() {
+            if (confirm('모든 최근 파일을 삭제하시겠습니까?')) {
+                localStorage.removeItem('recentFiles');
+                displayRecentFiles();
+            }
+        }
+
+        function displayRecentFiles() {
+            const recent = getRecentFiles();
+            const listElement = document.getElementById('recentList');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+
+            if (recent.length === 0) {
+                listElement.innerHTML = '<div class="empty-state">최근에 열어본 파일이 없습니다</div>';
+                clearAllBtn.style.display = 'none';
+                return;
+            }
+
+            clearAllBtn.style.display = 'block';
+            listElement.innerHTML = recent.map((file, index) => {
+                const date = new Date(file.date);
+                const dateStr = date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <li class="recent-item" onclick="openRecentFile(${index})">
+                        <div class="recent-item-info">
+                            <div class="recent-item-name">${escapeHtml(file.name)}</div>
+                            <div class="recent-item-date">${dateStr}</div>
+                        </div>
+                        <button class="recent-item-delete" onclick="deleteRecentFile(${index}, event)">삭제</button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // HTML 컨텐츠를 열고 최근 파일에 추가하는 헬퍼 함수
+        function openHtmlContent(fileName, htmlContent) {
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+
+            // 최근 파일 목록에 추가
+            addToRecent(fileName, htmlContent);
+
+            // 새 탭에서 열기
+            window.open(url, '_blank');
+        }
+
+        // 페이지 로드 시 최근 파일 표시
+        displayRecentFiles();
+
+        // Capacitor: 외부에서 파일 열기 처리 (다른 앱에서 공유받은 파일)
+        if (isNative) {
+            App.addListener('appUrlOpen', async (data) => {
+                console.log('App opened with URL:', data);
+
+                // URL에서 파일 경로 추출
+                if (data.url) {
+                    try {
+                        // file:// URL 처리
+                        const url = new URL(data.url);
+                        if (url.protocol === 'file:') {
+                            const filePath = decodeURIComponent(url.pathname);
+
+                            // 파일 읽기
+                            const content = await Filesystem.readFile({
+                                path: filePath
+                            });
+
+                            // Base64 디코딩
+                            const htmlContent = atob(content.data);
+                            const fileName = filePath.split('/').pop();
+
+                            // 파일 열기
+                            openHtmlContent(fileName, htmlContent);
+                        }
+                    } catch (error) {
+                        console.error('Error opening file from URL:', error);
+                        alert('파일을 열 수 없습니다: ' + error.message);
+                    }
+                }
+            });
+
+            // 앱이 처음 시작될 때의 URL도 확인
+            App.getLaunchUrl().then((result) => {
+                if (result && result.url) {
+                    // 위와 동일한 처리
+                    const event = { url: result.url };
+                    App.addListener('appUrlOpen', () => {}).then(() => {
+                        // 이미 리스너가 등록되었으므로 수동으로 처리
+                    });
+                }
+            }).catch((error) => {
+                console.log('No launch URL:', error);
+            });
+        }
+
+        // iOS 감지 및 안내 표시
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        if (isIOS() && !window.navigator.standalone) {
+            // 이미 홈 화면에 추가되지 않은 경우
+            setTimeout(() => {
+                document.getElementById('installPrompt').classList.add('show');
+            }, 2000);
+        }
+
+        // Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
+        }
+    </script>
+</body>
+</html>
