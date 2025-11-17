@@ -261,9 +261,70 @@
                 padding: 30px 15px;
             }
         }
+
+        /* HTML 뷰어 전체화면 스타일 */
+        .html-viewer-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 10000;
+            flex-direction: column;
+        }
+
+        .html-viewer-overlay.active {
+            display: flex;
+        }
+
+        .viewer-header {
+            background: #f0f0f0;
+            border-bottom: 1px solid #c0c0c0;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewer-title {
+            font-size: 0.9em;
+            color: #333333;
+            font-weight: 600;
+        }
+
+        .viewer-close {
+            background: #0078d4;
+            color: white;
+            border: 1px solid #005a9e;
+            border-radius: 3px;
+            padding: 6px 15px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .viewer-close:hover {
+            background: #005a9e;
+        }
+
+        .viewer-iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
+    <!-- HTML 뷰어 오버레이 -->
+    <div class="html-viewer-overlay" id="htmlViewer">
+        <div class="viewer-header">
+            <span class="viewer-title" id="viewerTitle">HTML 파일</span>
+            <button class="viewer-close" onclick="closeViewer()">닫기</button>
+        </div>
+        <iframe class="viewer-iframe" id="viewerFrame"></iframe>
+    </div>
+
     <div class="container">
         <div class="header">
             <img src="dlas-logo.png" alt="DLAS">
@@ -305,6 +366,28 @@
         const MAX_RECENT_FILES = 10;
         let deferredPrompt;
 
+        // HTML 뷰어 열기/닫기
+        function openViewer(fileName, htmlContent) {
+            const viewer = document.getElementById('htmlViewer');
+            const frame = document.getElementById('viewerFrame');
+            const title = document.getElementById('viewerTitle');
+
+            title.textContent = fileName;
+
+            // iframe에 HTML 콘텐츠 직접 작성
+            frame.srcdoc = htmlContent;
+
+            viewer.classList.add('active');
+        }
+
+        function closeViewer() {
+            const viewer = document.getElementById('htmlViewer');
+            const frame = document.getElementById('viewerFrame');
+
+            viewer.classList.remove('active');
+            frame.srcdoc = '';
+        }
+
         // PWA 설치 프롬프트
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -342,12 +425,8 @@
                     // 최근 파일 목록에 추가
                     addToRecent(file.name, content);
 
-                    // Data URL 생성 및 새 탭에서 열기
-                    const base64Content = btoa(unescape(encodeURIComponent(content)));
-                    const dataUrl = 'data:text/html;base64,' + base64Content;
-
-                    // 새 탭에서 열기
-                    window.open(dataUrl, '_blank');
+                    // 뷰어에서 열기
+                    openViewer(file.name, content);
                 };
                 reader.onerror = function(e) {
                     alert('파일을 읽을 수 없습니다: ' + e.target.error);
@@ -396,11 +475,8 @@
             if (index >= 0 && index < recent.length) {
                 const file = recent[index];
 
-                // Data URL 생성 및 새 탭에서 열기
-                const base64Content = btoa(unescape(encodeURIComponent(file.content)));
-                const dataUrl = 'data:text/html;base64,' + base64Content;
-
-                window.open(dataUrl, '_blank');
+                // 뷰어에서 열기
+                openViewer(file.name, file.content);
 
                 // 목록 상단으로 이동
                 addToRecent(file.name, file.content);
@@ -470,11 +546,8 @@
             // 최근 파일 목록에 추가
             addToRecent(fileName, htmlContent);
 
-            // Data URL 생성 및 새 탭에서 열기
-            const base64Content = btoa(unescape(encodeURIComponent(htmlContent)));
-            const dataUrl = 'data:text/html;base64,' + base64Content;
-
-            window.open(dataUrl, '_blank');
+            // 뷰어에서 열기
+            openViewer(fileName, htmlContent);
         }
 
         // 페이지 로드 시 최근 파일 표시
