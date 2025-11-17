@@ -338,17 +338,21 @@
             if (files.length === 0) return;
 
             Array.from(files).forEach(file => {
+                // 팝업 차단 방지: 동기적으로 새 창 열기
+                const newWindow = window.open('', '_blank');
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const content = e.target.result;
-                    const blob = new Blob([content], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
 
                     // 최근 파일 목록에 추가
                     addToRecent(file.name, content);
 
-                    // 새 탭에서 열기
-                    window.open(url, '_blank');
+                    // 새 창에 HTML 내용 쓰기
+                    if (newWindow) {
+                        newWindow.document.write(content);
+                        newWindow.document.close();
+                    }
                 };
                 reader.readAsText(file);
             });
@@ -393,9 +397,13 @@
             const recent = getRecentFiles();
             if (index >= 0 && index < recent.length) {
                 const file = recent[index];
-                const blob = new Blob([file.content], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
+
+                // 새 창에서 열기
+                const newWindow = window.open('', '_blank');
+                if (newWindow) {
+                    newWindow.document.write(file.content);
+                    newWindow.document.close();
+                }
 
                 // 목록 상단으로 이동
                 addToRecent(file.name, file.content);
@@ -462,14 +470,15 @@
 
         // HTML 컨텐츠를 열고 최근 파일에 추가하는 헬퍼 함수
         function openHtmlContent(fileName, htmlContent) {
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-
             // 최근 파일 목록에 추가
             addToRecent(fileName, htmlContent);
 
             // 새 탭에서 열기
-            window.open(url, '_blank');
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+                newWindow.document.write(htmlContent);
+                newWindow.document.close();
+            }
         }
 
         // 페이지 로드 시 최근 파일 표시
