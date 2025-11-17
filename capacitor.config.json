@@ -1,6 +1,6 @@
 {
   "appId": "com.htmlviewer.app",
-  "appName": "HTML Viewer",
+  "appName": "DLAS Viewer",
   "webDir": "www",
   "server": {
     "androidScheme": "https"
