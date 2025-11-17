@@ -17,23 +17,25 @@
         }
 
         body {
-            font-family: 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', Roboto, sans-serif;
+            background: #f0f0f0;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            color: #2c3e50;
+            color: #333333;
         }
 
         .container {
             max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
         }
 
         .header {
             text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            padding-top: 20px;
+            color: #333333;
+            margin-bottom: 25px;
         }
 
         .header h1 {
@@ -43,59 +45,55 @@
         }
 
         .header img {
-            max-width: 300px;
-            width: 80%;
+            max-width: 280px;
+            width: 70%;
             height: auto;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            color: #5a6c7d;
+            margin-bottom: 15px;
         }
 
         .upload-section {
-            background: #FFFFFF;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: #ffffff;
+            border: 1px solid #c0c0c0;
+            border-radius: 4px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
         }
 
         .upload-box {
-            border: 2px dashed #cfd8dc;
-            border-radius: 8px;
-            padding: 40px 20px;
+            border: 2px dashed #b0b0b0;
+            border-radius: 3px;
+            padding: 35px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            background: #ffffff;
+            transition: all 0.2s ease;
+            background: #fafafa;
         }
 
         .upload-box:hover,
         .upload-box:active {
-            background: #f8f9fa;
-            border-color: #3498db;
-            transform: translateY(-2px);
+            background: #f0f0f0;
+            border-color: #0078d4;
+            border-style: solid;
         }
 
         .upload-box svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            fill: #3498db;
+            width: 70px;
+            height: 70px;
+            margin-bottom: 18px;
+            fill: #0078d4;
         }
 
         .upload-box h2 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 1.5em;
+            color: #333333;
+            margin-bottom: 8px;
+            font-size: 1.4em;
             font-weight: 600;
         }
 
         .upload-box p {
-            color: #5a6c7d;
-            font-size: 0.95em;
+            color: #666666;
+            font-size: 0.9em;
         }
 
         #fileInput {
@@ -103,20 +101,21 @@
         }
 
         .recent-section {
-            background: #FFFFFF;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border: 1px solid #c0c0c0;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         .recent-section h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+            color: #333333;
+            margin-bottom: 12px;
+            font-size: 1.2em;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .recent-list {
@@ -124,13 +123,13 @@
         }
 
         .recent-item {
-            background: #f8f9fa;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
+            background: #f5f5f5;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 3px;
             cursor: pointer;
             transition: all 0.2s ease;
-            border: 1px solid #e9ecef;
+            border: 1px solid #d0d0d0;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -138,9 +137,8 @@
 
         .recent-item:hover,
         .recent-item:active {
-            background: #ffffff;
-            border-color: #3498db;
-            transform: translateX(5px);
+            background: #e8e8e8;
+            border-color: #0078d4;
         }
 
         .recent-item-info {
@@ -149,49 +147,50 @@
 
         .recent-item-name {
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
+            color: #333333;
+            margin-bottom: 4px;
             word-break: break-all;
         }
 
         .recent-item-date {
-            font-size: 0.85em;
-            color: #95a5a6;
+            font-size: 0.82em;
+            color: #888888;
         }
 
         .recent-item-delete {
-            background: #e74c3c;
+            background: #d83b01;
             color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 15px;
+            border: 1px solid #c13501;
+            border-radius: 3px;
+            padding: 6px 12px;
             cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.2s ease;
+            font-size: 0.85em;
+            transition: all 0.15s ease;
             flex-shrink: 0;
             margin-left: 10px;
         }
 
         .recent-item-delete:active {
-            background: #c0392b;
-            transform: scale(0.95);
+            background: #b83201;
+            border-color: #a02e01;
         }
 
         .empty-state {
             text-align: center;
-            color: #95a5a6;
-            padding: 30px;
-            font-size: 0.95em;
+            color: #888888;
+            padding: 25px;
+            font-size: 0.9em;
         }
 
         .install-prompt {
-            background: #3498db;
+            background: #0078d4;
             color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 12px 18px;
+            border-radius: 3px;
+            margin-bottom: 15px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(52,152,219,0.3);
+            border: 1px solid #005a9e;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: none;
         }
 
@@ -200,51 +199,52 @@
         }
 
         .install-prompt p {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 500;
         }
 
         .install-prompt button {
             background: white;
-            color: #3498db;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 6px;
+            color: #0078d4;
+            border: 1px solid #c0c0c0;
+            padding: 8px 20px;
+            border-radius: 3px;
             font-weight: 600;
             cursor: pointer;
-            font-size: 1em;
-            transition: all 0.2s ease;
+            font-size: 0.95em;
+            transition: all 0.15s ease;
         }
 
         .install-prompt button:hover {
-            background: #f8f9fa;
+            background: #f0f0f0;
+            border-color: #a0a0a0;
         }
 
         .install-prompt button:active {
-            transform: scale(0.95);
+            background: #e0e0e0;
         }
 
         .clear-all-btn {
-            background: #e74c3c;
+            background: #d83b01;
             color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 20px;
+            border: 1px solid #c13501;
+            border-radius: 3px;
+            padding: 8px 18px;
             cursor: pointer;
             font-size: 0.9em;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 8px;
             font-weight: 600;
         }
 
         .clear-all-btn:hover {
-            background: #c0392b;
+            background: #c13501;
         }
 
         .clear-all-btn:active {
-            background: #a93226;
-            transform: scale(0.98);
+            background: #b83201;
+            border-color: #a02e01;
         }
 
         @media (max-width: 480px) {
@@ -267,7 +267,6 @@
     <div class="container">
         <div class="header">
             <img src="dlas-logo.png" alt="DLAS">
-            <p>치과 3D 모델 뷰어</p>
         </div>
 
         <div class="install-prompt" id="installPrompt">
