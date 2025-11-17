@@ -182,48 +182,6 @@
             font-size: 0.9em;
         }
 
-        .install-prompt {
-            background: #0078d4;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 3px;
-            margin-bottom: 15px;
-            text-align: center;
-            border: 1px solid #005a9e;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: none;
-        }
-
-        .install-prompt.show {
-            display: block;
-        }
-
-        .install-prompt p {
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .install-prompt button {
-            background: white;
-            color: #0078d4;
-            border: 1px solid #c0c0c0;
-            padding: 8px 20px;
-            border-radius: 3px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.95em;
-            transition: all 0.15s ease;
-        }
-
-        .install-prompt button:hover {
-            background: #f0f0f0;
-            border-color: #a0a0a0;
-        }
-
-        .install-prompt button:active {
-            background: #e0e0e0;
-        }
-
         .clear-all-btn {
             background: #d83b01;
             color: white;
@@ -330,11 +288,6 @@
             <img src="dlas-logo.png" alt="DLAS">
         </div>
 
-        <div class="install-prompt" id="installPrompt">
-            <p>앱을 홈 화면에 추가하여 더 편리하게 사용하세요!</p>
-            <button onclick="showInstallInstructions()">설치 방법 보기</button>
-        </div>
-
         <div class="upload-section">
             <div class="upload-box" onclick="document.getElementById('fileInput').click()">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -374,6 +327,16 @@
 
             title.textContent = fileName;
 
+            // viewport meta 태그 추가하여 모바일에서 정확한 비율로 표시
+            if (!htmlContent.includes('viewport')) {
+                // head 태그를 찾아서 viewport 추가
+                const headMatch = htmlContent.match(/<head[^>]*>/i);
+                if (headMatch) {
+                    const viewportMeta = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">';
+                    htmlContent = htmlContent.replace(headMatch[0], headMatch[0] + '\n' + viewportMeta);
+                }
+            }
+
             // iframe에 HTML 콘텐츠 직접 작성
             frame.srcdoc = htmlContent;
 
@@ -386,28 +349,6 @@
 
             viewer.classList.remove('active');
             frame.srcdoc = '';
-        }
-
-        // PWA 설치 프롬프트
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').classList.add('show');
-        });
-
-        function showInstallInstructions() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        document.getElementById('installPrompt').classList.remove('show');
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                // iOS용 안내
-                alert('Safari에서:\n1. 하단의 공유 버튼을 탭하세요\n2. "홈 화면에 추가"를 선택하세요\n3. "추가"를 탭하세요');
-            }
         }
 
         // 파일 선택
@@ -597,18 +538,6 @@
             }).catch((error) => {
                 console.log('No launch URL:', error);
             });
-        }
-
-        // iOS 감지 및 안내 표시
-        function isIOS() {
-            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        }
-
-        if (isIOS() && !window.navigator.standalone) {
-            // 이미 홈 화면에 추가되지 않은 경우
-            setTimeout(() => {
-                document.getElementById('installPrompt').classList.add('show');
-            }, 2000);
         }
 
         // Service Worker 등록
