@@ -337,6 +337,92 @@
                 }
             }
 
+            // 모바일 UI 개선을 위한 CSS 주입
+            const mobileCSS = `
+<style id="mobile-ui-enhancement">
+    /* 모든 버튼 크기 증가 */
+    button, .button, input[type="button"], input[type="submit"] {
+        min-height: 44px !important;
+        min-width: 44px !important;
+        padding: 12px 20px !important;
+        font-size: 16px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* 체크박스, 라디오 버튼 크기 증가 */
+    input[type="checkbox"], input[type="radio"] {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+    }
+
+    /* 텍스트 입력 필드 크기 증가 */
+    input[type="text"], input[type="number"], select, textarea {
+        min-height: 44px !important;
+        font-size: 16px !important;
+        padding: 10px 15px !important;
+    }
+
+    /* 링크 클릭 영역 증가 */
+    a {
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 8px 12px !important;
+        font-size: 16px !important;
+    }
+
+    /* 레이블 크기 증가 */
+    label {
+        font-size: 16px !important;
+        padding: 8px !important;
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+
+    /* 패널, 컨트롤 요소 크기 증가 */
+    .panel, .control, .menu-item, .toolbar-item {
+        font-size: 16px !important;
+        min-height: 44px !important;
+        padding: 10px 15px !important;
+    }
+
+    /* 아이콘 크기 증가 */
+    .icon, svg:not([width]), i {
+        min-width: 28px !important;
+        min-height: 28px !important;
+        font-size: 20px !important;
+    }
+
+    /* 드롭다운, 셀렉트 박스 */
+    select {
+        min-height: 44px !important;
+        font-size: 16px !important;
+        padding: 10px 15px !important;
+    }
+
+    /* 상단 툴바 */
+    [class*="toolbar"], [class*="header"], [class*="top-bar"] {
+        min-height: 56px !important;
+        padding: 8px 12px !important;
+    }
+
+    /* 하단 툴바 */
+    [class*="bottom"], [class*="footer"] {
+        min-height: 56px !important;
+        padding: 8px 12px !important;
+    }
+</style>
+`;
+
+            // CSS를 head 태그 끝에 주입
+            const headCloseMatch = htmlContent.match(/<\/head>/i);
+            if (headCloseMatch) {
+                htmlContent = htmlContent.replace(headCloseMatch[0], mobileCSS + '\n' + headCloseMatch[0]);
+            }
+
             // iframe에 HTML 콘텐츠 직접 작성
             frame.srcdoc = htmlContent;
 
