@@ -14,6 +14,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+
+        // Check if app was launched with a file URL
+        if let url = launchOptions?[.url] as? URL {
+            print("🚀 App launched with URL: \(url)")
+            if url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm" {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.openFileInWebView(url: url)
+                }
+            }
+        }
+
         return true
     }
 
@@ -42,6 +53,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         // Called when the app was launched with a url. Feel free to add additional processing here,
         // but if you want the App API to support tracking app url opens, make sure to keep this call
+
+        print("📂 application(_:open:options:) called with URL: \(url)")
+        print("   Options: \(options)")
+
+        // Handle HTML files immediately
+        if url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.openFileInWebView(url: url)
+            }
+        }
+
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
@@ -52,20 +74,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
-    // Handle opening documents from other apps (e.g., KakaoTalk)
-    func application(_ application: UIApplication, open url: URL) -> Bool {
-        print("📂 Opening file from external app: \(url)")
-
-        // Call Capacitor handler first
-        let result = ApplicationDelegateProxy.shared.application(application, open: url, options: [:])
-
-        // Wait a bit for the web view to load, then inject the file
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.openFileInWebView(url: url)
-        }
-
-        return result
-    }
 
     func openFileInWebView(url: URL) {
         guard let webView = capacitorViewController?.webView else {
