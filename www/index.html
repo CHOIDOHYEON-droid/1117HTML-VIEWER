@@ -240,19 +240,28 @@
         }
 
         .viewer-header {
-            background: #f0f0f0;
+            background: #ffffff;
             border-bottom: 1px solid #c0c0c0;
             padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 50px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
         }
 
         .viewer-title {
             font-size: 0.9em;
             color: #333333;
             font-weight: 600;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: none;
         }
 
         .viewer-close {
