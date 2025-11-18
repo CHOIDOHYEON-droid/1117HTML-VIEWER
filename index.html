@@ -380,6 +380,15 @@
                     App = window.Capacitor.Plugins.App;
                     Filesystem = window.Capacitor.Plugins.Filesystem;
                     console.log('Capacitor loaded - Native platform detected');
+
+                    // App URL 이벤트 리스너 등록 (외부에서 파일 열기)
+                    if (App) {
+                        App.addListener('appUrlOpen', (data) => {
+                            console.log('📱 App URL opened:', data);
+                            handleExternalFile(data);
+                        });
+                        console.log('✅ App URL listener registered');
+                    }
                 }
             } else {
                 console.log('Running in web mode');
@@ -593,9 +602,16 @@
 
         // Capacitor: 외부에서 파일 열기 처리 (다른 앱에서 공유받은 파일)
         async function handleExternalFile(data) {
-            console.log('App opened with URL:', data);
+            console.log('📱 App opened with URL:', data);
 
-            if (!data.url) return;
+            if (!data.url) {
+                console.log('❌ No URL provided');
+                return;
+            }
+
+            // 외부 파일 플래그 설정
+            externalFileOpened = true;
+            console.log('🎯 External file flag set to true');
 
             try {
                 // 방법 1: fetch로 직접 읽기 시도 (가장 간단)
@@ -603,11 +619,13 @@
                 const htmlContent = await response.text();
                 const fileName = data.url.split('/').pop().split('?')[0];
 
-                console.log('File loaded via fetch:', fileName);
+                console.log('✅ File loaded via fetch:', fileName);
+
+                // 뷰어에서 열기 (최근 파일 목록에 추가)
                 openHtmlContent(fileName, htmlContent);
 
             } catch (fetchError) {
-                console.log('Fetch failed, trying Filesystem API:', fetchError);
+                console.log('⚠️ Fetch failed, trying Filesystem API:', fetchError);
 
                 // 방법 2: Filesystem API 사용
                 try {
@@ -619,7 +637,7 @@
                         filePath = filePath.substring(8);
                     }
 
-                    console.log('Reading file from:', filePath);
+                    console.log('📂 Reading file from:', filePath);
 
                     if (Filesystem) {
                         const content = await Filesystem.readFile({
@@ -629,13 +647,14 @@
                         const htmlContent = atob(content.data);
                         const fileName = filePath.split('/').pop();
 
-                        console.log('File loaded via Filesystem:', fileName);
+                        console.log('✅ File loaded via Filesystem:', fileName);
                         openHtmlContent(fileName, htmlContent);
                     } else {
+                        console.error('❌ Filesystem API not available');
                         alert('파일을 열 수 없습니다. Filesystem API를 사용할 수 없습니다.');
                     }
                 } catch (error) {
-                    console.error('All methods failed:', error);
+                    console.error('❌ All methods failed:', error);
                     alert('파일을 열 수 없습니다: ' + error.message);
                 }
             }
