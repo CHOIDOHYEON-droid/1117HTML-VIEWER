@@ -7,6 +7,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    // Store pending file URL when app is already running
+    var pendingFileURL: URL?
+
     // Access to Capacitor's web view
     var capacitorViewController: CAPBridgeViewController? {
         return window?.rootViewController as? CAPBridgeViewController
@@ -44,6 +47,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+
+        // Check if there's a pending file to open
+        if let url = pendingFileURL {
+            print("✅ App became active, opening pending file: \(url.lastPathComponent)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.openFileInWebView(url: url)
+            }
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -57,10 +68,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         print("📂 application(_:open:options:) called with URL: \(url)")
         print("   Options: \(options)")
 
-        // Handle HTML files immediately
+        // Handle HTML files
         if url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm" {
+            // Store the URL and try to open immediately
+            pendingFileURL = url
+            print("💾 Stored pending file URL: \(url.lastPathComponent)")
+
+            // Try to open immediately (might fail if webView not ready)
+            openFileInWebView(url: url)
+
+            // Also try again after a delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.openFileInWebView(url: url)
+                if self.pendingFileURL != nil {
+                    print("🔄 Retry opening file after delay")
+                    self.openFileInWebView(url: url)
+                }
             }
         }
 
@@ -127,6 +149,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     print("❌ JavaScript error: \(error)")
                 } else {
                     print("✅ JavaScript executed successfully")
+                    // Clear pending file after successful execution
+                    self.pendingFileURL = nil
                 }
             }
 
