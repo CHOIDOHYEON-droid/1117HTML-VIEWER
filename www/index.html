@@ -350,9 +350,23 @@
         </div>
     </div>
 
-    <script>
-        // Capacitor는 네이티브 앱에서만 사용 가능
-        const isNative = false; // 웹 환경
+    <script type="module">
+        // Capacitor 동적 import (네이티브 앱에서만 사용 가능)
+        let Capacitor, App, Filesystem;
+        let isNative = false;
+
+        try {
+            // Capacitor가 빌드 시 자동 주입되므로 window.Capacitor 확인
+            if (window.Capacitor) {
+                isNative = window.Capacitor.isNativePlatform();
+                Capacitor = window.Capacitor;
+                App = window.Capacitor.Plugins.App;
+                Filesystem = window.Capacitor.Plugins.Filesystem;
+            }
+        } catch (e) {
+            console.log('Running in web mode');
+        }
+
         const MAX_RECENT_FILES = 10;
         let deferredPrompt;
 
