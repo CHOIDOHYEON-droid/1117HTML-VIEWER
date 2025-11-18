@@ -601,6 +601,33 @@
         // 페이지 로드 시 최근 파일 표시
         displayRecentFiles();
 
+        // 외부 파일 체크 - 최근 파일과 비교
+        function checkForExternalFile() {
+            const recent = getRecentFiles();
+            console.log('📊 Recent files count:', recent.length);
+
+            // 최근 파일의 타임스탬프 확인
+            if (recent.length > 0) {
+                const mostRecent = recent[0];
+                const timeSinceAdded = Date.now() - mostRecent.date;
+                console.log('⏱️ Time since most recent file:', timeSinceAdded, 'ms');
+
+                // 2초 이내에 추가된 파일이 있으면 외부에서 열린 것으로 간주
+                if (timeSinceAdded < 2000) {
+                    console.log('🎯 Recent file added within 2 seconds - likely external launch');
+                    externalFileOpened = true;
+
+                    // 해당 파일 자동으로 열기
+                    setTimeout(() => {
+                        openRecentFile(0);
+                    }, 100);
+                }
+            }
+        }
+
+        // 외부 파일 체크 실행
+        checkForExternalFile();
+
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
             // 외부에서 파일이 열린 경우 메인 화면을 숨김 (뷰어만 표시)
