@@ -358,13 +358,18 @@
         let App, Filesystem;
         const MAX_RECENT_FILES = 10;
         let deferredPrompt;
+        let externalFileOpened = false; // 외부 파일 열림 플래그
 
         // FileOpener 리스너 등록 (즉시 실행)
         if (window.FileOpener) {
             window.FileOpener.addListener((data) => {
-                console.log('File opened via FileOpener:', data.fileName);
+                console.log('🎯 File opened via FileOpener:', data.fileName);
+                externalFileOpened = true; // 외부에서 파일이 열렸음을 표시
                 openHtmlContent(data.fileName, data.content);
             });
+            console.log('✅ FileOpener listener registered');
+        } else {
+            console.log('⚠️ FileOpener not found');
         }
 
         // Capacitor 로드 확인
@@ -411,9 +416,18 @@
         function closeViewer() {
             const viewer = document.getElementById('htmlViewer');
             const frame = document.getElementById('viewerFrame');
+            const container = document.querySelector('.container');
 
             viewer.classList.remove('active');
             frame.srcdoc = '';
+
+            // 외부에서 열린 파일을 닫을 때 메인 화면 다시 표시
+            if (externalFileOpened) {
+                if (container) {
+                    container.style.display = 'block';
+                }
+                externalFileOpened = false; // 플래그 리셋
+            }
         }
 
         // 파일 선택
@@ -561,9 +575,19 @@
 
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
-            const viewer = document.getElementById('htmlViewer');
-            if (!viewer.classList.contains('active')) {
-                hideLoadingScreen();
+            // 외부에서 파일이 열린 경우 메인 화면을 숨김 (뷰어만 표시)
+            if (externalFileOpened) {
+                console.log('🎯 External file opened - hiding main screen');
+                const container = document.querySelector('.container');
+                if (container) {
+                    container.style.display = 'none';
+                }
+            } else {
+                // 일반 로드인 경우 로딩 화면만 숨김
+                const viewer = document.getElementById('htmlViewer');
+                if (!viewer.classList.contains('active')) {
+                    hideLoadingScreen();
+                }
             }
         }, 2000);
 
