@@ -486,45 +486,59 @@
         displayRecentFiles();
 
         // Capacitor: 외부에서 파일 열기 처리 (다른 앱에서 공유받은 파일)
-        if (isNative) {
-            App.addListener('appUrlOpen', async (data) => {
-                console.log('App opened with URL:', data);
+        async function handleExternalFile(data) {
+            console.log('App opened with URL:', data);
 
-                // URL에서 파일 경로 추출
-                if (data.url) {
-                    try {
-                        // file:// URL 처리
-                        const url = new URL(data.url);
-                        if (url.protocol === 'file:') {
-                            const filePath = decodeURIComponent(url.pathname);
+            if (!data.url) return;
 
-                            // 파일 읽기
-                            const content = await Filesystem.readFile({
-                                path: filePath
-                            });
+            try {
+                const url = new URL(data.url);
+                let filePath = decodeURIComponent(url.pathname);
 
-                            // Base64 디코딩
-                            const htmlContent = atob(content.data);
-                            const fileName = filePath.split('/').pop();
-
-                            // 파일 열기
-                            openHtmlContent(fileName, htmlContent);
-                        }
-                    } catch (error) {
-                        console.error('Error opening file from URL:', error);
-                        alert('파일을 열 수 없습니다: ' + error.message);
-                    }
+                // iOS의 경우 경로 정리
+                if (filePath.startsWith('/private')) {
+                    filePath = filePath.substring(8); // '/private' 제거
                 }
-            });
 
-            // 앱이 처음 시작될 때의 URL도 확인
+                console.log('Reading file from:', filePath);
+
+                // 파일 읽기
+                const content = await Filesystem.readFile({
+                    path: filePath
+                });
+
+                // Base64 디코딩하여 텍스트로 변환
+                const htmlContent = atob(content.data);
+                const fileName = filePath.split('/').pop();
+
+                console.log('File loaded:', fileName);
+
+                // 파일 열기
+                openHtmlContent(fileName, htmlContent);
+            } catch (error) {
+                console.error('Error opening file from URL:', error);
+
+                // 대체 방법: fetch 사용
+                try {
+                    const response = await fetch(data.url);
+                    const htmlContent = await response.text();
+                    const fileName = data.url.split('/').pop();
+                    openHtmlContent(fileName, htmlContent);
+                } catch (fetchError) {
+                    console.error('Fetch also failed:', fetchError);
+                    alert('파일을 열 수 없습니다: ' + error.message);
+                }
+            }
+        }
+
+        if (isNative) {
+            // 앱이 이미 실행 중일 때 파일이 열리는 경우
+            App.addListener('appUrlOpen', handleExternalFile);
+
+            // 앱이 처음 시작될 때 파일과 함께 열리는 경우
             App.getLaunchUrl().then((result) => {
                 if (result && result.url) {
-                    // 위와 동일한 처리
-                    const event = { url: result.url };
-                    App.addListener('appUrlOpen', () => {}).then(() => {
-                        // 이미 리스너가 등록되었으므로 수동으로 처리
-                    });
+                    handleExternalFile(result);
                 }
             }).catch((error) => {
                 console.log('No launch URL:', error);
