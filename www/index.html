@@ -280,7 +280,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: #333333;
+            background: #FFFFFF;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -377,8 +377,10 @@
 
             viewer.classList.add('active');
 
-            // 로딩 화면 숨기기
-            hideLoadingScreen();
+            // 2초 후 로딩 화면 숨기고 뷰어 표시
+            setTimeout(() => {
+                hideLoadingScreen();
+            }, 2000);
         }
 
         function closeViewer() {
