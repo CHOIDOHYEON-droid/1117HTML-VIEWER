@@ -98,8 +98,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func openFileInWebView(url: URL) {
+        // WebView 준비 확인 - 준비되지 않았으면 재시도
         guard let webView = capacitorViewController?.webView else {
-            print("❌ WebView not found")
+            print("⏳ WebView not ready yet, will retry...")
+
+            // pendingFileURL에 저장하여 나중에 재시도
+            pendingFileURL = url
+
+            // 0.5초 후 재시도
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.openFileInWebView(url: url)
+            }
             return
         }
 
@@ -130,21 +139,39 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 .replacingOccurrences(of: "\"", with: "\\\"")
                 .replacingOccurrences(of: "'", with: "\\'")
 
-            // Call JavaScript function
-            let jsCode = """
+            // JavaScript가 로드될 때까지 기다리기 위한 체크 코드
+            let checkAndExecute = """
             (function() {
                 console.log('🚀 Attempting to open file from native');
-                if (typeof window.openExternalFile === 'function') {
-                    window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
-                    console.log('✅ openExternalFile called');
-                } else {
-                    console.error('❌ window.openExternalFile not found');
-                    console.log('Available:', Object.keys(window).filter(k => k.includes('open')));
+
+                // FileOpener가 준비될 때까지 최대 5초 대기
+                var attempts = 0;
+                var maxAttempts = 50;
+
+                function tryOpen() {
+                    attempts++;
+                    console.log('Attempt ' + attempts + ': Checking for FileOpener...');
+
+                    if (typeof window.openExternalFile === 'function') {
+                        console.log('✅ openExternalFile found, calling it now');
+                        window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
+                        return true;
+                    } else if (attempts < maxAttempts) {
+                        console.log('⏳ FileOpener not ready, retrying in 100ms...');
+                        setTimeout(tryOpen, 100);
+                        return false;
+                    } else {
+                        console.error('❌ window.openExternalFile not found after ' + attempts + ' attempts');
+                        console.log('Available:', Object.keys(window).filter(k => k.includes('open')));
+                        return false;
+                    }
                 }
+
+                tryOpen();
             })();
             """
 
-            webView.evaluateJavaScript(jsCode) { result, error in
+            webView.evaluateJavaScript(checkAndExecute) { result, error in
                 if let error = error {
                     print("❌ JavaScript error: \(error)")
                 } else {
