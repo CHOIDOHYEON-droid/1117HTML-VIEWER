@@ -287,6 +287,7 @@
             z-index: 99999;
             opacity: 1;
             transition: opacity 0.3s ease;
+            padding: 20px;
         }
 
         .loading-screen.hidden {
@@ -295,11 +296,12 @@
         }
 
         .loading-screen img {
-            max-width: 60%;
-            max-height: 60%;
+            max-width: 80%;
+            max-height: 80%;
             width: auto;
             height: auto;
             object-fit: contain;
+            display: block;
         }
     </style>
 </head>
@@ -536,7 +538,7 @@
             if (!viewer.classList.contains('active')) {
                 hideLoadingScreen();
             }
-        }, 500);
+        }, 2000);
 
         // Capacitor: 외부에서 파일 열기 처리 (다른 앱에서 공유받은 파일)
         async function handleExternalFile(data) {
