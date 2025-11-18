@@ -9,6 +9,7 @@
     <title>DLAS Viewer</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="file-opener.js"></script>
     <script src="capacitor.js"></script>
     <style>
         * {
@@ -358,6 +359,14 @@
         const MAX_RECENT_FILES = 10;
         let deferredPrompt;
 
+        // FileOpener 리스너 등록 (즉시 실행)
+        if (window.FileOpener) {
+            window.FileOpener.addListener((data) => {
+                console.log('File opened via FileOpener:', data.fileName);
+                openHtmlContent(data.fileName, data.content);
+            });
+        }
+
         // Capacitor 로드 확인
         document.addEventListener('DOMContentLoaded', () => {
             if (window.Capacitor) {
@@ -366,15 +375,6 @@
                     App = window.Capacitor.Plugins.App;
                     Filesystem = window.Capacitor.Plugins.Filesystem;
                     console.log('Capacitor loaded - Native platform detected');
-
-                    // FileOpener 플러그인 리스너 등록
-                    if (window.Capacitor.Plugins.FileOpenerPlugin) {
-                        window.Capacitor.Plugins.FileOpenerPlugin.addListener('fileOpened', (data) => {
-                            console.log('File opened from native:', data.fileName);
-                            openHtmlContent(data.fileName, data.content);
-                        });
-                        console.log('FileOpener plugin listener registered');
-                    }
                 }
             } else {
                 console.log('Running in web mode');

@@ -1,5 +1,6 @@
 import Foundation
 import Capacitor
+import WebKit
 
 @objc(FileOpenerPlugin)
 public class FileOpenerPlugin: CAPPlugin {
@@ -21,11 +22,35 @@ public class FileOpenerPlugin: CAPPlugin {
             return
         }
 
-        // Send data to JavaScript
-        self.notifyListeners("fileOpened", data: [
-            "fileName": fileName,
-            "content": content
-        ])
+        // Escape content for JavaScript
+        let escapedContent = content
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+
+        let escapedFileName = fileName
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+
+        // Call JavaScript function directly
+        let jsCode = """
+        if (window.openExternalFile) {
+            window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
+        } else {
+            console.error('openExternalFile not found');
+        }
+        """
+
+        DispatchQueue.main.async {
+            self.bridge?.webView?.evaluateJavaScript(jsCode) { result, error in
+                if let error = error {
+                    print("Error calling JavaScript: \(error)")
+                } else {
+                    print("Successfully called openExternalFile")
+                }
+            }
+        }
     }
 
     deinit {
