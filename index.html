@@ -565,56 +565,85 @@
             if (!data.url) return;
 
             try {
-                const url = new URL(data.url);
-                let filePath = decodeURIComponent(url.pathname);
+                // 방법 1: fetch로 직접 읽기 시도 (가장 간단)
+                const response = await fetch(data.url);
+                const htmlContent = await response.text();
+                const fileName = data.url.split('/').pop().split('?')[0];
 
-                // iOS의 경우 경로 정리
-                if (filePath.startsWith('/private')) {
-                    filePath = filePath.substring(8); // '/private' 제거
-                }
-
-                console.log('Reading file from:', filePath);
-
-                // 파일 읽기
-                const content = await Filesystem.readFile({
-                    path: filePath
-                });
-
-                // Base64 디코딩하여 텍스트로 변환
-                const htmlContent = atob(content.data);
-                const fileName = filePath.split('/').pop();
-
-                console.log('File loaded:', fileName);
-
-                // 파일 열기
+                console.log('File loaded via fetch:', fileName);
                 openHtmlContent(fileName, htmlContent);
-            } catch (error) {
-                console.error('Error opening file from URL:', error);
 
-                // 대체 방법: fetch 사용
+            } catch (fetchError) {
+                console.log('Fetch failed, trying Filesystem API:', fetchError);
+
+                // 방법 2: Filesystem API 사용
                 try {
-                    const response = await fetch(data.url);
-                    const htmlContent = await response.text();
-                    const fileName = data.url.split('/').pop();
-                    openHtmlContent(fileName, htmlContent);
-                } catch (fetchError) {
-                    console.error('Fetch also failed:', fetchError);
+                    const url = new URL(data.url);
+                    let filePath = decodeURIComponent(url.pathname);
+
+                    // iOS의 경우 경로 정리
+                    if (filePath.startsWith('/private')) {
+                        filePath = filePath.substring(8);
+                    }
+
+                    console.log('Reading file from:', filePath);
+
+                    if (Filesystem) {
+                        const content = await Filesystem.readFile({
+                            path: filePath
+                        });
+
+                        const htmlContent = atob(content.data);
+                        const fileName = filePath.split('/').pop();
+
+                        console.log('File loaded via Filesystem:', fileName);
+                        openHtmlContent(fileName, htmlContent);
+                    } else {
+                        alert('파일을 열 수 없습니다. Filesystem API를 사용할 수 없습니다.');
+                    }
+                } catch (error) {
+                    console.error('All methods failed:', error);
                     alert('파일을 열 수 없습니다: ' + error.message);
                 }
             }
         }
 
-        if (isNative) {
-            // 앱이 이미 실행 중일 때 파일이 열리는 경우
-            App.addListener('appUrlOpen', handleExternalFile);
+        // Capacitor 이벤트 리스너 등록
+        function registerCapacitorListeners() {
+            if (isNative && App) {
+                console.log('Registering Capacitor listeners...');
 
-            // 앱이 처음 시작될 때 파일과 함께 열리는 경우
-            App.getLaunchUrl().then((result) => {
-                if (result && result.url) {
-                    handleExternalFile(result);
-                }
-            }).catch((error) => {
-                console.log('No launch URL:', error);
+                // 앱이 이미 실행 중일 때 파일이 열리는 경우
+                App.addListener('appUrlOpen', handleExternalFile);
+
+                // 앱이 처음 시작될 때 파일과 함께 열리는 경우
+                App.getLaunchUrl().then((result) => {
+                    if (result && result.url) {
+                        console.log('Launch URL detected:', result.url);
+                        handleExternalFile(result);
+                    }
+                }).catch((error) => {
+                    console.log('No launch URL:', error);
+                });
+            }
+        }
+
+        // Capacitor 로드 후 리스너 등록
+        if (window.Capacitor) {
+            registerCapacitorListeners();
+        } else {
+            // Capacitor가 나중에 로드될 경우를 대비
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    if (window.Capacitor) {
+                        isNative = window.Capacitor.isNativePlatform();
+                        if (isNative) {
+                            App = window.Capacitor.Plugins.App;
+                            Filesystem = window.Capacitor.Plugins.Filesystem;
+                            registerCapacitorListeners();
+                        }
+                    }
+                }, 100);
             });
         }
 
