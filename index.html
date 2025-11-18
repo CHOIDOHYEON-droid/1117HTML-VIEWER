@@ -366,6 +366,15 @@
                     App = window.Capacitor.Plugins.App;
                     Filesystem = window.Capacitor.Plugins.Filesystem;
                     console.log('Capacitor loaded - Native platform detected');
+
+                    // FileOpener 플러그인 리스너 등록
+                    if (window.Capacitor.Plugins.FileOpenerPlugin) {
+                        window.Capacitor.Plugins.FileOpenerPlugin.addListener('fileOpened', (data) => {
+                            console.log('File opened from native:', data.fileName);
+                            openHtmlContent(data.fileName, data.content);
+                        });
+                        console.log('FileOpener plugin listener registered');
+                    }
                 }
             } else {
                 console.log('Running in web mode');

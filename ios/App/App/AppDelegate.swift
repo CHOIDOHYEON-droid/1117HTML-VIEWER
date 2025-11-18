@@ -46,4 +46,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
+    // Handle opening documents from other apps (e.g., KakaoTalk)
+    func application(_ application: UIApplication, open url: URL) -> Bool {
+        print("Opening file from external app: \(url)")
+
+        // Read the file content
+        do {
+            let htmlContent = try String(contentsOf: url, encoding: .utf8)
+            let fileName = url.lastPathComponent
+
+            // Notify the web view via JavaScript
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ExternalFileOpened"),
+                object: nil,
+                userInfo: ["fileName": fileName, "content": htmlContent]
+            )
+
+            print("File loaded successfully: \(fileName)")
+        } catch {
+            print("Error reading file: \(error)")
+        }
+
+        // Also call the Capacitor handler
+        return ApplicationDelegateProxy.shared.application(application, open: url, options: [:])
+    }
+
 }
