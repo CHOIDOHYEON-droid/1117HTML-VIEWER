@@ -1,10 +1,16 @@
 import UIKit
 import Capacitor
+import WebKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+
+    // Access to Capacitor's web view
+    var capacitorViewController: CAPBridgeViewController? {
+        return window?.rootViewController as? CAPBridgeViewController
+    }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
@@ -48,27 +54,69 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // Handle opening documents from other apps (e.g., KakaoTalk)
     func application(_ application: UIApplication, open url: URL) -> Bool {
-        print("Opening file from external app: \(url)")
+        print("📂 Opening file from external app: \(url)")
 
-        // Read the file content
+        // Call Capacitor handler first
+        let result = ApplicationDelegateProxy.shared.application(application, open: url, options: [:])
+
+        // Wait a bit for the web view to load, then inject the file
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.openFileInWebView(url: url)
+        }
+
+        return result
+    }
+
+    func openFileInWebView(url: URL) {
+        guard let webView = capacitorViewController?.webView else {
+            print("❌ WebView not found")
+            return
+        }
+
         do {
             let htmlContent = try String(contentsOf: url, encoding: .utf8)
             let fileName = url.lastPathComponent
 
-            // Notify the web view via JavaScript
-            NotificationCenter.default.post(
-                name: NSNotification.Name("ExternalFileOpened"),
-                object: nil,
-                userInfo: ["fileName": fileName, "content": htmlContent]
-            )
+            print("✅ File read successfully: \(fileName)")
 
-            print("File loaded successfully: \(fileName)")
+            // Escape content for JavaScript
+            let escapedContent = htmlContent
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+                .replacingOccurrences(of: "\n", with: "\\n")
+                .replacingOccurrences(of: "\r", with: "\\r")
+                .replacingOccurrences(of: "'", with: "\\'")
+
+            let escapedFileName = fileName
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+                .replacingOccurrences(of: "'", with: "\\'")
+
+            // Call JavaScript function
+            let jsCode = """
+            (function() {
+                console.log('🚀 Attempting to open file from native');
+                if (typeof window.openExternalFile === 'function') {
+                    window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
+                    console.log('✅ openExternalFile called');
+                } else {
+                    console.error('❌ window.openExternalFile not found');
+                    console.log('Available:', Object.keys(window).filter(k => k.includes('open')));
+                }
+            })();
+            """
+
+            webView.evaluateJavaScript(jsCode) { result, error in
+                if let error = error {
+                    print("❌ JavaScript error: \(error)")
+                } else {
+                    print("✅ JavaScript executed successfully")
+                }
+            }
+
         } catch {
-            print("Error reading file: \(error)")
+            print("❌ Error reading file: \(error)")
         }
-
-        // Also call the Capacitor handler
-        return ApplicationDelegateProxy.shared.application(application, open: url, options: [:])
     }
 
 }
