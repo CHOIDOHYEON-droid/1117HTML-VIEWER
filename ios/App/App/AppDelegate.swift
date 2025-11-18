@@ -73,11 +73,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
+        // IMPORTANT: Start accessing security-scoped resource
+        let didStartAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
         do {
             let htmlContent = try String(contentsOf: url, encoding: .utf8)
             let fileName = url.lastPathComponent
 
-            print("✅ File read successfully: \(fileName)")
+            print("✅ File read successfully: \(fileName) (Security scoped: \(didStartAccess))")
 
             // Escape content for JavaScript
             let escapedContent = htmlContent
