@@ -9,6 +9,7 @@
     <title>DLAS Viewer</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="capacitor.js"></script>
     <style>
         * {
             margin: 0;
@@ -350,25 +351,26 @@
         </div>
     </div>
 
-    <script type="module">
-        // Capacitor 동적 import (네이티브 앱에서만 사용 가능)
-        let Capacitor, App, Filesystem;
+    <script>
+        // Capacitor 초기화 대기
         let isNative = false;
-
-        try {
-            // Capacitor가 빌드 시 자동 주입되므로 window.Capacitor 확인
-            if (window.Capacitor) {
-                isNative = window.Capacitor.isNativePlatform();
-                Capacitor = window.Capacitor;
-                App = window.Capacitor.Plugins.App;
-                Filesystem = window.Capacitor.Plugins.Filesystem;
-            }
-        } catch (e) {
-            console.log('Running in web mode');
-        }
-
+        let App, Filesystem;
         const MAX_RECENT_FILES = 10;
         let deferredPrompt;
+
+        // Capacitor 로드 확인
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Capacitor) {
+                isNative = window.Capacitor.isNativePlatform();
+                if (isNative) {
+                    App = window.Capacitor.Plugins.App;
+                    Filesystem = window.Capacitor.Plugins.Filesystem;
+                    console.log('Capacitor loaded - Native platform detected');
+                }
+            } else {
+                console.log('Running in web mode');
+            }
+        });
 
         // 로딩 화면 숨기기
         function hideLoadingScreen() {
