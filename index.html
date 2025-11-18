@@ -360,17 +360,36 @@
         let deferredPrompt;
         let externalFileOpened = false; // 외부 파일 열림 플래그
 
+        // 앱 시작 시 외부 파일 열기 플래그 체크
+        const launchFlag = localStorage.getItem('__external_file_launch');
+        if (launchFlag) {
+            console.log('🎯 Detected external file launch flag');
+            externalFileOpened = true;
+            localStorage.removeItem('__external_file_launch'); // 플래그 제거
+        }
+
         // FileOpener 리스너 등록 (즉시 실행)
         if (window.FileOpener) {
             window.FileOpener.addListener((data) => {
                 console.log('🎯 File opened via FileOpener:', data.fileName);
                 externalFileOpened = true; // 외부에서 파일이 열렸음을 표시
+
+                // 플래그 저장 (앱 재시작 시에도 감지 가능)
+                localStorage.setItem('__external_file_launch', 'true');
+
                 openHtmlContent(data.fileName, data.content);
             });
             console.log('✅ FileOpener listener registered');
         } else {
             console.log('⚠️ FileOpener not found');
         }
+
+        // 전역 함수로 외부 파일 플래그 설정 (Swift에서 호출 가능)
+        window.setExternalFileFlag = function() {
+            console.log('🚀 setExternalFileFlag called from native');
+            externalFileOpened = true;
+            localStorage.setItem('__external_file_launch', 'true');
+        };
 
         // Capacitor 로드 확인
         document.addEventListener('DOMContentLoaded', () => {

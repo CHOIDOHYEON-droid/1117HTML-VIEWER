@@ -139,45 +139,63 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 .replacingOccurrences(of: "\"", with: "\\\"")
                 .replacingOccurrences(of: "'", with: "\\'")
 
-            // JavaScript가 로드될 때까지 기다리기 위한 체크 코드
-            let checkAndExecute = """
+            // 1단계: 외부 파일 플래그 먼저 설정
+            let setFlagCode = """
             (function() {
-                console.log('🚀 Attempting to open file from native');
-
-                // FileOpener가 준비될 때까지 최대 5초 대기
-                var attempts = 0;
-                var maxAttempts = 50;
-
-                function tryOpen() {
-                    attempts++;
-                    console.log('Attempt ' + attempts + ': Checking for FileOpener...');
-
-                    if (typeof window.openExternalFile === 'function') {
-                        console.log('✅ openExternalFile found, calling it now');
-                        window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
-                        return true;
-                    } else if (attempts < maxAttempts) {
-                        console.log('⏳ FileOpener not ready, retrying in 100ms...');
-                        setTimeout(tryOpen, 100);
-                        return false;
-                    } else {
-                        console.error('❌ window.openExternalFile not found after ' + attempts + ' attempts');
-                        console.log('Available:', Object.keys(window).filter(k => k.includes('open')));
-                        return false;
-                    }
+                console.log('🚀 Setting external file flag');
+                localStorage.setItem('__external_file_launch', 'true');
+                if (typeof window.setExternalFileFlag === 'function') {
+                    window.setExternalFileFlag();
                 }
-
-                tryOpen();
+                console.log('✅ Flag set');
             })();
             """
 
-            webView.evaluateJavaScript(checkAndExecute) { result, error in
-                if let error = error {
-                    print("❌ JavaScript error: \(error)")
-                } else {
-                    print("✅ JavaScript executed successfully")
-                    // Clear pending file after successful execution
-                    self.pendingFileURL = nil
+            webView.evaluateJavaScript(setFlagCode) { _, _ in
+                // 2단계: 플래그 설정 후 파일 열기 시도
+                let openFileCode = """
+                (function() {
+                    console.log('🚀 Attempting to open file from native');
+
+                    // FileOpener가 준비될 때까지 최대 5초 대기
+                    var attempts = 0;
+                    var maxAttempts = 50;
+
+                    function tryOpen() {
+                        attempts++;
+                        console.log('Attempt ' + attempts + ': Checking for FileOpener...');
+
+                        if (typeof window.openExternalFile === 'function') {
+                            console.log('✅ openExternalFile found, calling it now');
+                            window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
+                            return true;
+                        } else if (attempts < maxAttempts) {
+                            console.log('⏳ FileOpener not ready, retrying in 100ms...');
+                            setTimeout(tryOpen, 100);
+                            return false;
+                        } else {
+                            console.error('❌ window.openExternalFile not found after ' + attempts + ' attempts');
+                            console.log('Available:', Object.keys(window).filter(k => k.includes('open')));
+
+                            // 최후의 수단: 페이지 새로고침으로 플래그 적용
+                            console.log('🔄 Reloading page to apply flag...');
+                            window.location.reload();
+                            return false;
+                        }
+                    }
+
+                    tryOpen();
+                })();
+                """
+
+                webView.evaluateJavaScript(openFileCode) { result, error in
+                    if let error = error {
+                        print("❌ JavaScript error: \\(error)")
+                    } else {
+                        print("✅ JavaScript executed successfully")
+                        // Clear pending file after successful execution
+                        self.pendingFileURL = nil
+                    }
                 }
             }
 
