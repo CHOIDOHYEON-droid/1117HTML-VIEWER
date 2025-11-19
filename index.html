@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DLAS Viewer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
     <title>DLAS Viewer</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -300,7 +301,7 @@
             <span class="viewer-title" id="viewerTitle">HTML 파일</span>
             <button class="viewer-close" onclick="closeViewer()">닫기</button>
         </div>
-        <iframe class="viewer-iframe" id="viewerFrame"></iframe>
+        <iframe class="viewer-iframe" id="viewerFrame" sandbox="allow-scripts allow-same-origin allow-modals allow-forms"></iframe>
     </div>
 
     <div class="container">
