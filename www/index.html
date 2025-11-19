@@ -381,11 +381,14 @@
         if (window.FileOpener) {
             window.FileOpener.addListener((data) => {
                 console.log('🎯 File opened via FileOpener:', data.fileName);
-                externalFileOpened = true; // 외부에서 파일이 열렸음을 표시
+
+                // 즉시 플래그 설정하여 checkForExternalFile() 중복 실행 방지
+                externalFileOpened = true;
 
                 // 플래그 저장 (앱 재시작 시에도 감지 가능)
                 localStorage.setItem('__external_file_launch', 'true');
 
+                // 파일 열기
                 openHtmlContent(data.fileName, data.content);
             });
             console.log('✅ FileOpener listener registered');
@@ -612,13 +615,19 @@
 
         // 외부 파일 체크 - 최근 파일과 비교
         function checkForExternalFile() {
+            // FileOpener 리스너가 이미 파일을 열었다면 중복 실행 방지
+            if (externalFileOpened) {
+                console.log('🚫 Skipping checkForExternalFile - FileOpener already handled it');
+                return;
+            }
+
             const recent = getRecentFiles();
             console.log('📊 Recent files count:', recent.length);
 
             // 최근 파일의 타임스탬프 확인
             if (recent.length > 0) {
                 const mostRecent = recent[0];
-                const timeSinceAdded = Date.now() - mostRecent.date;
+                const timeSinceAdded = Date.now() - new Date(mostRecent.date).getTime();
                 console.log('⏱️ Time since most recent file:', timeSinceAdded, 'ms');
 
                 // 2초 이내에 추가된 파일이 있으면 외부에서 열린 것으로 간주
@@ -634,8 +643,10 @@
             }
         }
 
-        // 외부 파일 체크 실행
-        checkForExternalFile();
+        // 외부 파일 체크 실행 (약간의 딜레이를 주어 FileOpener가 먼저 처리되도록)
+        setTimeout(() => {
+            checkForExternalFile();
+        }, 300);
 
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
@@ -664,8 +675,9 @@
                 return;
             }
 
-            // 외부 파일 플래그 설정
+            // 즉시 외부 파일 플래그 설정 (중복 실행 방지)
             externalFileOpened = true;
+            localStorage.setItem('__external_file_launch', 'true');
             console.log('🎯 External file flag set to true');
 
             try {
