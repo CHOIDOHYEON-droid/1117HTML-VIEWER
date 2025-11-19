@@ -377,10 +377,23 @@
             localStorage.removeItem('__external_file_launch'); // 플래그 제거
         }
 
+        // 마지막으로 열린 파일 정보 저장 (중복 방지용)
+        let lastOpenedFile = { name: '', timestamp: 0 };
+
         // FileOpener 리스너 등록 (즉시 실행)
         if (window.FileOpener) {
             window.FileOpener.addListener((data) => {
+                const now = Date.now();
                 console.log('🎯 File opened via FileOpener:', data.fileName);
+
+                // IMPORTANT: 중복 실행 방지 - 같은 파일이 100ms 이내에 다시 열리는 것 방지
+                if (lastOpenedFile.name === data.fileName && (now - lastOpenedFile.timestamp) < 100) {
+                    console.log('⏭️ Skipping duplicate file open');
+                    return;
+                }
+
+                // 마지막 파일 정보 업데이트
+                lastOpenedFile = { name: data.fileName, timestamp: now };
 
                 // 즉시 플래그 설정하여 checkForExternalFile() 중복 실행 방지
                 externalFileOpened = true;
@@ -440,10 +453,19 @@
             const frame = document.getElementById('viewerFrame');
             const title = document.getElementById('viewerTitle');
 
+            console.log('📂 Opening viewer for file:', fileName);
+
             title.textContent = fileName;
 
-            // iframe에 HTML 콘텐츠 직접 작성
-            frame.srcdoc = htmlContent;
+            // IMPORTANT: iframe 강제 리셋으로 이전 내용 완전히 제거
+            // 이렇게 하지 않으면 WKWebView에서 srcdoc이 제대로 업데이트되지 않을 수 있음
+            frame.srcdoc = '';
+
+            // 강제 리플로우를 위해 짧은 딜레이 후 새 내용 설정
+            setTimeout(() => {
+                frame.srcdoc = htmlContent;
+                console.log('✅ Viewer content updated');
+            }, 10);
 
             viewer.classList.add('active');
 
@@ -603,11 +625,15 @@
 
         // HTML 컨텐츠를 열고 최근 파일에 추가하는 헬퍼 함수
         function openHtmlContent(fileName, htmlContent) {
+            console.log('📥 openHtmlContent called for:', fileName);
+
             // 최근 파일 목록에 추가
             addToRecent(fileName, htmlContent);
+            console.log('💾 File added to recent list');
 
             // 뷰어에서 열기
             openViewer(fileName, htmlContent);
+            console.log('🖥️ Viewer opened for:', fileName);
         }
 
         // 페이지 로드 시 최근 파일 표시
@@ -630,9 +656,10 @@
                 const timeSinceAdded = Date.now() - new Date(mostRecent.date).getTime();
                 console.log('⏱️ Time since most recent file:', timeSinceAdded, 'ms');
 
-                // 2초 이내에 추가된 파일이 있으면 외부에서 열린 것으로 간주
-                if (timeSinceAdded < 2000) {
-                    console.log('🎯 Recent file added within 2 seconds - likely external launch');
+                // IMPORTANT: 500ms 이내에 추가된 파일만 자동으로 열기 (2초 → 500ms로 단축)
+                // 이렇게 하면 페이지 재로드 시 이전 파일이 다시 열리는 것을 방지
+                if (timeSinceAdded < 500) {
+                    console.log('🎯 Recent file added within 500ms - likely external launch');
                     externalFileOpened = true;
 
                     // 해당 파일 자동으로 열기
@@ -643,10 +670,10 @@
             }
         }
 
-        // 외부 파일 체크 실행 (약간의 딜레이를 주어 FileOpener가 먼저 처리되도록)
+        // 외부 파일 체크 실행 (FileOpener가 먼저 처리되도록 충분한 딜레이)
         setTimeout(() => {
             checkForExternalFile();
-        }, 300);
+        }, 1000);
 
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
