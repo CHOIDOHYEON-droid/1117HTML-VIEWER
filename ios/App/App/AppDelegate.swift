@@ -51,6 +51,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Check if there's a pending file to open
         if let url = pendingFileURL {
             print("✅ App became active, opening pending file: \(url.lastPathComponent)")
+
+            // IMPORTANT: Clear pendingFileURL IMMEDIATELY to prevent duplicate opens
+            self.pendingFileURL = nil
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self.openFileInWebView(url: url)
             }
@@ -70,18 +74,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         // Handle HTML files
         if url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm" {
-            // Store the URL and try to open immediately
+            // IMPORTANT: Clear old pendingFileURL and store new one
+            print("🔄 Clearing old pending file (if any)")
+            pendingFileURL = nil
+
+            // Store the NEW URL
             pendingFileURL = url
-            print("💾 Stored pending file URL: \(url.lastPathComponent)")
+            print("💾 Stored NEW pending file URL: \(url.lastPathComponent)")
 
             // Try to open immediately (might fail if webView not ready)
             openFileInWebView(url: url)
 
-            // Also try again after a delay
+            // Also try again after a delay (only if still pending)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if self.pendingFileURL != nil {
-                    print("🔄 Retry opening file after delay")
+                // Only retry if the URL is still the same one we're trying to open
+                if self.pendingFileURL?.absoluteString == url.absoluteString {
+                    print("🔄 Retry opening file after delay: \(url.lastPathComponent)")
                     self.openFileInWebView(url: url)
+                } else {
+                    print("⏭️ Skip retry - URL changed or already opened")
                 }
             }
         }
@@ -193,7 +204,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         print("❌ JavaScript error: \\(error)")
                     } else {
                         print("✅ JavaScript executed successfully")
-                        // Clear pending file after successful execution
+                    }
+
+                    // IMPORTANT: Always clear pending file after execution attempt
+                    // (whether success or failure) to prevent duplicate opens
+                    if self.pendingFileURL?.absoluteString == url.absoluteString {
+                        print("🧹 Clearing pendingFileURL for: \\(url.lastPathComponent)")
                         self.pendingFileURL = nil
                     }
                 }
