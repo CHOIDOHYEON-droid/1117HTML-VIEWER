@@ -380,6 +380,37 @@
         // 마지막으로 열린 파일 정보 저장 (중복 방지용)
         let lastOpenedFile = { name: '', timestamp: 0 };
 
+        // 외부 파일 열기 시 완전 초기화 함수 (전역으로 노출)
+        window.resetAppForExternalFile = function() {
+            console.log('🔄 Resetting app state for external file...');
+
+            // 1. 모든 localStorage 데이터 삭제 (완전 초기화)
+            localStorage.clear();
+            console.log('✅ localStorage cleared');
+
+            // 2. 뷰어 완전히 닫기
+            const viewer = document.getElementById('htmlViewer');
+            const frame = document.getElementById('viewerFrame');
+            if (viewer) {
+                viewer.classList.remove('active');
+            }
+            if (frame) {
+                frame.srcdoc = '';
+            }
+            console.log('✅ Viewer reset');
+
+            // 3. 메인 화면 숨기기
+            const container = document.querySelector('.container');
+            if (container) {
+                container.style.display = 'none';
+            }
+            console.log('✅ Main screen hidden');
+
+            // 4. 플래그 초기화
+            window.externalFileOpened = true;
+            console.log('✅ App state reset complete');
+        };
+
         // FileOpener 리스너 등록 (즉시 실행)
         if (window.FileOpener) {
             window.FileOpener.addListener((data) => {
@@ -395,14 +426,14 @@
                 // 마지막 파일 정보 업데이트
                 lastOpenedFile = { name: data.fileName, timestamp: now };
 
-                // 즉시 플래그 설정하여 checkForExternalFile() 중복 실행 방지
-                externalFileOpened = true;
+                // ⭐ 핵심: 외부 파일 열기 전에 앱 완전 초기화
+                window.resetAppForExternalFile();
 
-                // 플래그 저장 (앱 재시작 시에도 감지 가능)
-                localStorage.setItem('__external_file_launch', 'true');
-
-                // 파일 열기
-                openHtmlContent(data.fileName, data.content);
+                // 초기화 후 새 파일 열기 (localStorage에 저장하지 않음)
+                setTimeout(() => {
+                    openViewer(data.fileName, data.content);
+                    console.log('🖥️ External file opened:', data.fileName);
+                }, 50);
             });
             console.log('✅ FileOpener listener registered');
         } else {
@@ -639,41 +670,8 @@
         // 페이지 로드 시 최근 파일 표시
         displayRecentFiles();
 
-        // 외부 파일 체크 - 최근 파일과 비교
-        function checkForExternalFile() {
-            // FileOpener 리스너가 이미 파일을 열었다면 중복 실행 방지
-            if (externalFileOpened) {
-                console.log('🚫 Skipping checkForExternalFile - FileOpener already handled it');
-                return;
-            }
-
-            const recent = getRecentFiles();
-            console.log('📊 Recent files count:', recent.length);
-
-            // 최근 파일의 타임스탬프 확인
-            if (recent.length > 0) {
-                const mostRecent = recent[0];
-                const timeSinceAdded = Date.now() - new Date(mostRecent.date).getTime();
-                console.log('⏱️ Time since most recent file:', timeSinceAdded, 'ms');
-
-                // IMPORTANT: 500ms 이내에 추가된 파일만 자동으로 열기 (2초 → 500ms로 단축)
-                // 이렇게 하면 페이지 재로드 시 이전 파일이 다시 열리는 것을 방지
-                if (timeSinceAdded < 500) {
-                    console.log('🎯 Recent file added within 500ms - likely external launch');
-                    externalFileOpened = true;
-
-                    // 해당 파일 자동으로 열기
-                    setTimeout(() => {
-                        openRecentFile(0);
-                    }, 100);
-                }
-            }
-        }
-
-        // 외부 파일 체크 실행 (FileOpener가 먼저 처리되도록 충분한 딜레이)
-        setTimeout(() => {
-            checkForExternalFile();
-        }, 1000);
+        // ⭐ checkForExternalFile() 로직 제거됨
+        // 이제 외부 파일은 FileOpener에서만 처리하고, 매번 완전 초기화함
 
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
@@ -702,10 +700,8 @@
                 return;
             }
 
-            // 즉시 외부 파일 플래그 설정 (중복 실행 방지)
-            externalFileOpened = true;
-            localStorage.setItem('__external_file_launch', 'true');
-            console.log('🎯 External file flag set to true');
+            // ⭐ 핵심: 외부 파일 열기 전에 앱 완전 초기화
+            window.resetAppForExternalFile();
 
             try {
                 // 방법 1: fetch로 직접 읽기 시도 (가장 간단)
@@ -715,8 +711,11 @@
 
                 console.log('✅ File loaded via fetch:', fileName);
 
-                // 뷰어에서 열기 (최근 파일 목록에 추가)
-                openHtmlContent(fileName, htmlContent);
+                // 초기화 후 뷰어에서 바로 열기 (localStorage에 저장하지 않음)
+                setTimeout(() => {
+                    openViewer(fileName, htmlContent);
+                    console.log('🖥️ External file opened:', fileName);
+                }, 50);
 
             } catch (fetchError) {
                 console.log('⚠️ Fetch failed, trying Filesystem API:', fetchError);
@@ -742,7 +741,12 @@
                         const fileName = filePath.split('/').pop();
 
                         console.log('✅ File loaded via Filesystem:', fileName);
-                        openHtmlContent(fileName, htmlContent);
+
+                        // 초기화 후 뷰어에서 바로 열기 (localStorage에 저장하지 않음)
+                        setTimeout(() => {
+                            openViewer(fileName, htmlContent);
+                            console.log('🖥️ External file opened:', fileName);
+                        }, 50);
                     } else {
                         console.error('❌ Filesystem API not available');
                         alert('파일을 열 수 없습니다. Filesystem API를 사용할 수 없습니다.');

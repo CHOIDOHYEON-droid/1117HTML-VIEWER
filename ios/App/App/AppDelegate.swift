@@ -150,20 +150,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 .replacingOccurrences(of: "\"", with: "\\\"")
                 .replacingOccurrences(of: "'", with: "\\'")
 
-            // 1단계: 외부 파일 플래그 먼저 설정
-            let setFlagCode = """
+            // 1단계: 앱 상태 완전 초기화 (캐시 삭제, 뷰어 리셋)
+            let resetCode = """
             (function() {
-                console.log('🚀 Setting external file flag');
-                localStorage.setItem('__external_file_launch', 'true');
-                if (typeof window.setExternalFileFlag === 'function') {
-                    window.setExternalFileFlag();
+                console.log('🔄 [Native] Resetting app for external file');
+
+                // resetAppForExternalFile 함수 호출 (존재하면)
+                if (typeof window.resetAppForExternalFile === 'function') {
+                    window.resetAppForExternalFile();
+                    console.log('✅ [Native] App reset via function');
+                } else {
+                    // 함수가 없으면 직접 초기화
+                    localStorage.clear();
+                    var viewer = document.getElementById('htmlViewer');
+                    var frame = document.getElementById('viewerFrame');
+                    var container = document.querySelector('.container');
+                    if (viewer) viewer.classList.remove('active');
+                    if (frame) frame.srcdoc = '';
+                    if (container) container.style.display = 'none';
+                    window.externalFileOpened = true;
+                    console.log('✅ [Native] App reset manually');
                 }
-                console.log('✅ Flag set');
             })();
             """
 
-            webView.evaluateJavaScript(setFlagCode) { _, _ in
-                // 2단계: 플래그 설정 후 파일 열기 시도
+            webView.evaluateJavaScript(resetCode) { _, _ in
+                // 2단계: 초기화 완료 후 파일 열기 시도
                 let openFileCode = """
                 (function() {
                     console.log('🚀 Attempting to open file from native');
