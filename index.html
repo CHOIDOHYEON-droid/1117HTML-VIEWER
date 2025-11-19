@@ -54,157 +54,83 @@
         }
 
         .upload-section {
-            background: #ffffff;
-            border: 1px solid #c0c0c0;
-            border-radius: 4px;
-            padding: 25px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 40px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
         .upload-box {
-            border: 2px dashed #b0b0b0;
-            border-radius: 3px;
-            padding: 35px 20px;
+            border: 3px dashed #c0c8d0;
+            border-radius: 16px;
+            padding: 60px 30px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
-            background: #fafafa;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,120,212,0.03) 0%, rgba(102,126,234,0.03) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-box:hover::before {
+            opacity: 1;
         }
 
         .upload-box:hover,
         .upload-box:active {
-            background: #f0f0f0;
-            border-color: #0078d4;
+            border-color: #667eea;
             border-style: solid;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.15);
         }
 
         .upload-box svg {
-            width: 70px;
-            height: 70px;
-            margin-bottom: 18px;
-            fill: #0078d4;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            fill: #667eea;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-box:hover svg {
+            transform: scale(1.1);
         }
 
         .upload-box h2 {
-            color: #333333;
-            margin-bottom: 8px;
-            font-size: 1.4em;
-            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.6em;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
         }
 
         .upload-box p {
-            color: #666666;
-            font-size: 0.9em;
+            color: #7f8c8d;
+            font-size: 1em;
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
         }
 
         #fileInput {
             display: none;
-        }
-
-        .recent-section {
-            background: #ffffff;
-            border: 1px solid #c0c0c0;
-            border-radius: 4px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
-        .recent-section h3 {
-            color: #333333;
-            margin-bottom: 12px;
-            font-size: 1.2em;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .recent-list {
-            list-style: none;
-        }
-
-        .recent-item {
-            background: #f5f5f5;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid #d0d0d0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .recent-item:hover,
-        .recent-item:active {
-            background: #e8e8e8;
-            border-color: #0078d4;
-        }
-
-        .recent-item-info {
-            flex: 1;
-        }
-
-        .recent-item-name {
-            font-weight: 600;
-            color: #333333;
-            margin-bottom: 4px;
-            word-break: break-all;
-        }
-
-        .recent-item-date {
-            font-size: 0.82em;
-            color: #888888;
-        }
-
-        .recent-item-delete {
-            background: #d83b01;
-            color: white;
-            border: 1px solid #c13501;
-            border-radius: 3px;
-            padding: 6px 12px;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.15s ease;
-            flex-shrink: 0;
-            margin-left: 10px;
-        }
-
-        .recent-item-delete:active {
-            background: #b83201;
-            border-color: #a02e01;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #888888;
-            padding: 25px;
-            font-size: 0.9em;
-        }
-
-        .clear-all-btn {
-            background: #d83b01;
-            color: white;
-            border: 1px solid #c13501;
-            border-radius: 3px;
-            padding: 8px 18px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.15s ease;
-            width: 100%;
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        .clear-all-btn:hover {
-            background: #c13501;
-        }
-
-        .clear-all-btn:active {
-            background: #b83201;
-            border-color: #a02e01;
         }
 
         @media (max-width: 480px) {
@@ -212,13 +138,12 @@
                 font-size: 2em;
             }
 
-            .upload-section,
-            .recent-section {
-                padding: 20px;
+            .upload-section {
+                padding: 30px 20px;
             }
 
             .upload-box {
-                padding: 30px 15px;
+                padding: 50px 20px;
             }
         }
 
@@ -346,26 +271,12 @@
             </div>
             <input type="file" id="fileInput" accept=".html,.htm" multiple>
         </div>
-
-        <div class="recent-section">
-            <h3>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/>
-                </svg>
-                최근 파일
-            </h3>
-            <ul class="recent-list" id="recentList"></ul>
-            <button class="clear-all-btn" onclick="clearAllRecent()" id="clearAllBtn" style="display: none;">
-                전체 삭제
-            </button>
-        </div>
     </div>
 
     <script>
         // Capacitor 초기화 대기
         let isNative = false;
         let App, Filesystem;
-        const MAX_RECENT_FILES = 10;
         let deferredPrompt;
         let externalFileOpened = false; // 외부 파일 열림 플래그
 
@@ -536,10 +447,10 @@
                 reader.onload = function(e) {
                     const content = e.target.result;
 
-                    // 최근 파일 목록에 추가
-                    addToRecent(file.name, content);
+                    console.log('📂 [직접 선택] 파일 열기:', file.name);
 
-                    // 뷰어에서 열기
+                    // ⭐ 직접 선택한 파일도 최근 목록에 저장하지 않음 (외부 파일과 동일하게 처리)
+                    // 뷰어에서 바로 열기
                     openViewer(file.name, content);
                 };
                 reader.onerror = function(e) {
@@ -552,127 +463,8 @@
             event.target.value = '';
         }
 
-        // 최근 파일 관리
-        function getRecentFiles() {
-            const recent = localStorage.getItem('recentFiles');
-            return recent ? JSON.parse(recent) : [];
-        }
-
-        function saveRecentFiles(files) {
-            localStorage.setItem('recentFiles', JSON.stringify(files));
-        }
-
-        function addToRecent(fileName, content) {
-            let recent = getRecentFiles();
-
-            // 중복 제거
-            recent = recent.filter(item => item.name !== fileName);
-
-            // 새 항목 추가
-            recent.unshift({
-                name: fileName,
-                content: content,
-                date: new Date().toISOString()
-            });
-
-            // 최대 개수 제한
-            if (recent.length > MAX_RECENT_FILES) {
-                recent = recent.slice(0, MAX_RECENT_FILES);
-            }
-
-            saveRecentFiles(recent);
-            displayRecentFiles();
-        }
-
-        function openRecentFile(index) {
-            const recent = getRecentFiles();
-            if (index >= 0 && index < recent.length) {
-                const file = recent[index];
-
-                // 뷰어에서 열기
-                openViewer(file.name, file.content);
-
-                // 목록 상단으로 이동
-                addToRecent(file.name, file.content);
-            }
-        }
-
-        function deleteRecentFile(index, event) {
-            event.stopPropagation();
-
-            if (confirm('이 파일을 목록에서 삭제하시겠습니까?')) {
-                let recent = getRecentFiles();
-                recent.splice(index, 1);
-                saveRecentFiles(recent);
-                displayRecentFiles();
-            }
-        }
-
-        function clearAllRecent() {
-            if (confirm('모든 최근 파일을 삭제하시겠습니까?')) {
-                localStorage.removeItem('recentFiles');
-                displayRecentFiles();
-            }
-        }
-
-        function displayRecentFiles() {
-            const recent = getRecentFiles();
-            const listElement = document.getElementById('recentList');
-            const clearAllBtn = document.getElementById('clearAllBtn');
-
-            if (recent.length === 0) {
-                listElement.innerHTML = '<div class="empty-state">최근에 열어본 파일이 없습니다</div>';
-                clearAllBtn.style.display = 'none';
-                return;
-            }
-
-            clearAllBtn.style.display = 'block';
-            listElement.innerHTML = recent.map((file, index) => {
-                const date = new Date(file.date);
-                const dateStr = date.toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                return `
-                    <li class="recent-item" onclick="openRecentFile(${index})">
-                        <div class="recent-item-info">
-                            <div class="recent-item-name">${escapeHtml(file.name)}</div>
-                            <div class="recent-item-date">${dateStr}</div>
-                        </div>
-                        <button class="recent-item-delete" onclick="deleteRecentFile(${index}, event)">삭제</button>
-                    </li>
-                `;
-            }).join('');
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // HTML 컨텐츠를 열고 최근 파일에 추가하는 헬퍼 함수
-        function openHtmlContent(fileName, htmlContent) {
-            console.log('📥 openHtmlContent called for:', fileName);
-
-            // 최근 파일 목록에 추가
-            addToRecent(fileName, htmlContent);
-            console.log('💾 File added to recent list');
-
-            // 뷰어에서 열기
-            openViewer(fileName, htmlContent);
-            console.log('🖥️ Viewer opened for:', fileName);
-        }
-
-        // 페이지 로드 시 최근 파일 표시
-        displayRecentFiles();
-
-        // ⭐ checkForExternalFile() 로직 제거됨
-        // 이제 외부 파일은 FileOpener에서만 처리하고, 매번 완전 초기화함
+        // ⭐ 최근 파일 기능 완전 제거됨
+        // 모든 파일(직접 선택 + 외부)을 동일하게 처리: 뷰어에서만 표시, 저장 안함
 
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
