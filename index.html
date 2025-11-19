@@ -269,12 +269,28 @@
             -webkit-touch-callout: none;
             pointer-events: none;
         }
+
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.7em;
+            color: #999999;
+            text-align: right;
+            line-height: 1.4;
+            /* 드래그 방지 */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <!-- 로딩 화면 -->
     <div class="loading-screen" id="loadingScreen">
         <img src="white-logo.jpg" alt="DLAS Loading">
+        <div class="version-info">DLAS v1.0 ⓒ 2025 Dental Lab Automation Solution - All rights reserved</div>
     </div>
 
     <!-- HTML 뷰어 오버레이 -->
