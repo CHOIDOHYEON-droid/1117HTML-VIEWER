@@ -285,6 +285,48 @@
             -webkit-touch-callout: none;
             pointer-events: none;
         }
+
+        .privacy-link {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.5em;
+            color: #999999;
+            text-align: center;
+            white-space: nowrap;
+            cursor: pointer;
+            text-decoration: underline;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            pointer-events: auto;
+            transition: color 0.2s ease;
+        }
+
+        .privacy-link:hover {
+            color: #666666;
+        }
+
+        .footer-privacy {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer-privacy a {
+            color: #999999;
+            font-size: 0.85em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .footer-privacy a:hover {
+            color: #666666;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -292,6 +334,7 @@
     <div class="loading-screen" id="loadingScreen">
         <img src="white-logo.jpg" alt="DLAS Loading">
         <div class="version-info">DLAS v1.0 ⓒ 2025 Dental Lab Automation Solution - All rights reserved</div>
+        <div class="privacy-link" onclick="openPrivacyPolicy()">개인정보 처리방침</div>
     </div>
 
     <!-- HTML 뷰어 오버레이 -->
@@ -318,9 +361,19 @@
             </div>
             <input type="file" id="fileInput" accept=".html,.htm" multiple>
         </div>
+
+        <div class="footer-privacy">
+            <a onclick="openPrivacyPolicy()">개인정보 처리방침</a>
+        </div>
     </div>
 
     <script>
+        // 개인정보 처리방침 열기
+        function openPrivacyPolicy() {
+            const url = 'https://choidohyeon-droid.github.io/1117HTML-VIEWER/privacy-policy.html';
+            window.open(url, '_blank');
+        }
+
         // Capacitor 초기화 대기
         let isNative = false;
         let App, Filesystem;
