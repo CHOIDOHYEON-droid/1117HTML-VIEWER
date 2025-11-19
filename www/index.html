@@ -406,7 +406,8 @@
             }
             console.log('✅ Main screen hidden');
 
-            // 4. 플래그 초기화
+            // 4. 플래그 초기화 (지역 변수와 window 객체 모두 설정)
+            externalFileOpened = true;
             window.externalFileOpened = true;
             console.log('✅ App state reset complete');
         };
