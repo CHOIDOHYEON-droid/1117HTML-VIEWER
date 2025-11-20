@@ -216,6 +216,10 @@
             user-select: none;
             -webkit-user-select: none;
             pointer-events: none;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .viewer-header > div {
@@ -623,7 +627,9 @@
 
             console.log('📂 Opening viewer for file:', fileName);
 
-            title.textContent = fileName;
+            // 파일명을 20글자로 제한
+            const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
+            title.textContent = displayName;
 
             // IMPORTANT: iframe 강제 리셋으로 이전 내용 완전히 제거
             // 이렇게 하지 않으면 WKWebView에서 srcdoc이 제대로 업데이트되지 않을 수 있음
