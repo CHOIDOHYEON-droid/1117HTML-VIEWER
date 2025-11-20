@@ -271,6 +271,24 @@
             pointer-events: none;
         }
 
+        .legal-notice {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65em;
+            color: #666666;
+            text-align: center;
+            max-width: 90%;
+            line-height: 1.4;
+            padding: 0 10px;
+            /* 드래그 방지 */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            pointer-events: none;
+        }
+
         .version-info {
             position: absolute;
             bottom: 30px;
@@ -292,6 +310,7 @@
     <!-- 로딩 화면 -->
     <div class="loading-screen" id="loadingScreen">
         <img src="white-logo.jpg" alt="DLAS Loading">
+        <div class="legal-notice">이 앱은 일반적인 3D/HTML 파일 뷰어로, 의료기기(의료기기법 상 의료기기)가 아닙니다.<br>진단, 치료, 수술 계획 등 의료 목적에는 사용하지 마십시오.</div>
         <div class="version-info">DLAS v1.0 ⓒ 2025 Dental Lab Automation Solution - All rights reserved</div>
     </div>
 
