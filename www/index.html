@@ -66,6 +66,8 @@
             /* 이미지 드래그 방지 */
             user-select: none;
             -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             -webkit-user-drag: none;
             -webkit-touch-callout: none;
             pointer-events: none;
@@ -176,6 +178,13 @@
             background: #F5F5F5;
             z-index: 10000;
             flex-direction: column;
+            /* 드래그 방지 */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
         }
 
         .html-viewer-overlay.active {
@@ -225,6 +234,14 @@
             flex: 1;
             border: none;
             width: 100%;
+            /* 드래그 방지 */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+            pointer-events: auto;
         }
 
         /* 로딩 화면 스타일 */
@@ -266,6 +283,8 @@
             /* 이미지 드래그 방지 */
             user-select: none;
             -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             -webkit-user-drag: none;
             -webkit-touch-callout: none;
             pointer-events: none;
@@ -473,10 +492,34 @@
             // 이렇게 하지 않으면 WKWebView에서 srcdoc이 제대로 업데이트되지 않을 수 있음
             frame.srcdoc = '';
 
+            // 드래그 방지 스타일을 HTML 콘텐츠에 주입
+            const dragPreventStyle = `
+                <style>
+                    * {
+                        user-select: none !important;
+                        -webkit-user-select: none !important;
+                        -moz-user-select: none !important;
+                        -ms-user-select: none !important;
+                        -webkit-touch-callout: none !important;
+                        -webkit-user-drag: none !important;
+                    }
+                </style>
+            `;
+
+            // <head> 태그에 스타일 추가, 없으면 <body> 앞에 추가
+            let modifiedContent = htmlContent;
+            if (htmlContent.includes('</head>')) {
+                modifiedContent = htmlContent.replace('</head>', dragPreventStyle + '</head>');
+            } else if (htmlContent.includes('<body')) {
+                modifiedContent = htmlContent.replace('<body', dragPreventStyle + '<body');
+            } else {
+                modifiedContent = dragPreventStyle + htmlContent;
+            }
+
             // 강제 리플로우를 위해 짧은 딜레이 후 새 내용 설정
             setTimeout(() => {
-                frame.srcdoc = htmlContent;
-                console.log('✅ Viewer content updated');
+                frame.srcdoc = modifiedContent;
+                console.log('✅ Viewer content updated with drag prevention');
             }, 10);
 
             viewer.classList.add('active');
