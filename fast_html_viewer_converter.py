@@ -889,7 +889,9 @@ def exo_transform_if_possible(stl_path: str,
 # ==============================================================================
 def generate_html(model_infos: list[dict[str, str]],
                   annos_json: str,
-                  user_logo_b64: str | None = None) -> str:
+                  user_logo_b64: str | None = None,
+                  password: str | None = None,
+                  password_enabled: bool = False) -> str:
     group_color_map = {
         "upper_crownbridge": 0xFFFFF0,
         "upper_abutment":    0xC0C0C0,
@@ -948,6 +950,8 @@ def generate_html(model_infos: list[dict[str, str]],
 <script>
 const _BASE_HTML = document.documentElement.cloneNode(true).outerHTML;
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+const PASSWORD_HASH = "$password_hash";
+const PASSWORD_ENABLED = $password_enabled;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -1239,9 +1243,80 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
       opacity: 0.9;
     }
   }
+
+  /* 비밀번호 보호 모달 */
+  #passwordModal{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.85);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+  }
+  #passwordBox{
+    background:#fff;
+    padding:30px 40px;
+    border-radius:12px;
+    min-width:320px;
+    max-width:90%;
+    text-align:center;
+    box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  }
+  #passwordBox h2{
+    margin:0 0 20px 0;
+    color:#333;
+    font-size:20px;
+  }
+  #passwordInput{
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    border:2px solid #ddd;
+    border-radius:6px;
+    margin-bottom:15px;
+    box-sizing:border-box;
+  }
+  #passwordInput:focus{
+    outline:none;
+    border-color:#1565c0;
+  }
+  #passwordSubmit{
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    background:#1565c0;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+  }
+  #passwordSubmit:hover{
+    background:#0d47a1;
+  }
+  #passwordError{
+    color:#d32f2f;
+    font-size:14px;
+    margin-top:10px;
+    display:none;
+  }
 </style>
 </head>
 <body>
+<!-- 비밀번호 보호 모달 -->
+<div id="passwordModal">
+  <div id="passwordBox">
+    <h2>🔒 비밀번호 입력</h2>
+    <input type="password" id="passwordInput" placeholder="비밀번호를 입력하세요" autocomplete="off">
+    <button id="passwordSubmit">확인</button>
+    <div id="passwordError">비밀번호가 올바르지 않습니다.</div>
+  </div>
+</div>
+
 $top_logo
 $user_logo
 
@@ -1691,18 +1766,81 @@ function initMobileUI(){
   console.log("initMobileUI 완료!");
 }
 
+// 비밀번호 보호 기능
+(function(){
+  if(!PASSWORD_ENABLED) return;
+
+  const modal = document.getElementById("passwordModal");
+  const input = document.getElementById("passwordInput");
+  const submitBtn = document.getElementById("passwordSubmit");
+  const errorMsg = document.getElementById("passwordError");
+
+  // SHA-256 해시 함수 (간단한 구현)
+  async function sha256(str){
+    const buffer = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // 세션 스토리지에서 인증 상태 확인
+  const isAuthenticated = sessionStorage.getItem('dlas_authenticated') === 'true';
+
+  if(!isAuthenticated){
+    // 모달 표시
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // 확인 버튼 클릭
+    async function checkPassword(){
+      const inputValue = input.value;
+      const hash = await sha256(inputValue);
+
+      if(hash === PASSWORD_HASH){
+        // 인증 성공
+        sessionStorage.setItem('dlas_authenticated', 'true');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        errorMsg.style.display = 'none';
+        input.value = '';
+      } else {
+        // 인증 실패
+        errorMsg.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    submitBtn.onclick = checkPassword;
+    input.onkeypress = (e) => {
+      if(e.key === 'Enter') checkPassword();
+    };
+
+    // 포커스
+    setTimeout(() => input.focus(), 100);
+  }
+})();
+
 window.onload=()=>{initThree();loadAllModels();restoreAnnotations();updateGroupPanel();toggleAddAnno();animate();document.getElementById("saveGroupsBtn").onclick=saveHTML;document.getElementById("saveViewBtn").onclick=saveCurrentView;renderer.domElement.addEventListener("click",onClickViewer,false);enableFocusEvents();updateViewButtons();initMobileUI();};
 window.onresize=()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);};
 </script>
 </body>
 </html>""")
 
+    # 비밀번호 해시 계산
+    import hashlib
+    password_hash = ""
+    if password_enabled and password:
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
     return html_tpl.safe_substitute(
         js_models=js_models,
         annos_json=annos_json,
         js_colormap=js_colormap,
         top_logo=top_logo_html,
-        user_logo=user_logo_html
+        user_logo=user_logo_html,
+        password_hash=password_hash,
+        password_enabled="true" if password_enabled else "false"
     )
 
 # ==============================================================================
@@ -1720,7 +1858,7 @@ def _is_ant_scan(fname: str) -> bool:
 # Worker Process for HTML Conversion (C++ crash protection)
 # ==============================================================================
 def _run_html_worker_process(result_queue, work_folder_str, stl_paths_list, html_path_str,
-                              mode_str, user_logo_path_str, skip_processed):
+                              mode_str, user_logo_path_str, skip_processed, password_str="", password_enabled_bool=False):
     """
     별도 프로세스에서 HTML 변환 작업 실행
     C++ 크래시가 발생해도 메인 프로세스는 영향받지 않음
@@ -1744,7 +1882,9 @@ def _run_html_worker_process(result_queue, work_folder_str, stl_paths_list, html
             stl_paths, html_path_str, work_folder_str, mode,
             log_callback=None,
             user_logo_path=user_logo_path_str,
-            progress_callback=None
+            progress_callback=None,
+            password=password_str,
+            password_enabled=password_enabled_bool
         )
 
         # 마커 파일 생성
@@ -1761,7 +1901,9 @@ def convert_stls_to_html(stl_paths: list[str], save_html_path: str, folder_for_m
                          work_mode: str,
                          log_callback=None, user_logo_path: str | None = None,
                          group_override: dict[str, str] | None = None,
-                         progress_callback=None) -> None:
+                         progress_callback=None,
+                         password: str | None = None,
+                         password_enabled: bool = False) -> None:
     """
     work_mode: '3shape' | 'exo'
     folder_for_mapping: 그룹/표시 파싱 기준 폴더
@@ -1896,7 +2038,7 @@ def convert_stls_to_html(stl_paths: list[str], save_html_path: str, folder_for_m
         user_logo_b64 = encode_image_b64(user_logo_path) if user_logo_path else None
         ann_plain = []
         with open(save_html_path, "w", encoding="utf-8") as f:
-            f.write(generate_html(model_infos, json.dumps(ann_plain), user_logo_b64))
+            f.write(generate_html(model_infos, json.dumps(ann_plain), user_logo_b64, password, password_enabled))
         log_callback and log_callback(f"[SAVE] {save_html_path}")
 
     finally:
@@ -2471,6 +2613,45 @@ class STLViewerGUI(QMainWindow):
 
         main_layout.addWidget(logo_card)
 
+        # Password card
+        password_card = self.create_card()
+        password_layout = QVBoxLayout(password_card)
+        password_layout.setSpacing(8)
+
+        password_header = QLabel("비밀번호 보호")
+        password_header.setStyleSheet(f"font-size: 13px; font-weight: bold; color: {Style.TEXT_PRIMARY};")
+        password_layout.addWidget(password_header)
+
+        # Password checkbox
+        self.password_checkbox = QCheckBox("HTML 파일을 비밀번호로 보호")
+        self.password_checkbox.setStyleSheet(Style.checkbox())
+        self.password_checkbox.setCursor(QCursor(Qt.PointingHandCursor))
+        self.password_checkbox.stateChanged.connect(self.toggle_password_input)
+        password_layout.addWidget(self.password_checkbox)
+
+        # Password input
+        password_input_row = QHBoxLayout()
+        password_label = QLabel("비밀번호:")
+        password_label.setMinimumWidth(100)
+        password_input_row.addWidget(password_label)
+
+        self.password_input = QLineEdit()
+        self.password_input.setPlaceholderText("비밀번호 입력")
+        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setStyleSheet(Style.lineedit())
+        self.password_input.setEnabled(False)
+        password_input_row.addWidget(self.password_input, 1)
+
+        password_layout.addLayout(password_input_row)
+
+        # Password hint
+        password_hint = QLabel("💡 파일을 열 때마다 비밀번호 입력이 필요합니다")
+        password_hint.setStyleSheet(f"font-size: 11px; color: {Style.TEXT_SECONDARY}; padding: 5px;")
+        password_hint.setWordWrap(True)
+        password_layout.addWidget(password_hint)
+
+        main_layout.addWidget(password_card)
+
         # Progress card
         progress_card = self.create_card()
         progress_layout = QVBoxLayout(progress_card)
@@ -2674,6 +2855,12 @@ class STLViewerGUI(QMainWindow):
             self.logo_display.setText("선택안함")
         self.save_config()
 
+    def toggle_password_input(self, state: int) -> None:
+        """비밀번호 입력 필드 활성화/비활성화"""
+        self.password_input.setEnabled(state == Qt.Checked)
+        if state != Qt.Checked:
+            self.password_input.clear()
+
     def open_output_folder(self) -> None:
         """작업완료 폴더 열기"""
         if self.completed_folder_path and os.path.exists(self.completed_folder_path):
@@ -2866,10 +3053,12 @@ class STLViewerGUI(QMainWindow):
 
                         # multiprocessing.Process로 각 폴더 처리
                         result_queue = multiprocessing.Queue()
+                        password_val = self.password_input.text() if self.password_checkbox.isChecked() else ""
+                        password_enabled_val = self.password_checkbox.isChecked()
                         worker_process = multiprocessing.Process(
                             target=_run_html_worker_process,
                             args=(result_queue, work_folder, stl_paths, html_path,
-                                  mode, self.user_logo_path, skip_processed)
+                                  mode, self.user_logo_path, skip_processed, password_val, password_enabled_val)
                         )
                         worker_process.start()
                         worker_process.join(timeout=60)  # 60초 타임아웃
