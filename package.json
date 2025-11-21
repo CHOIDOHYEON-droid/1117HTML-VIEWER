@@ -1,6 +1,6 @@
 {
   "name": "dlas-viewer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "DLAS - 치과 3D 모델 HTML 파일 뷰어",
   "main": "index.html",
   "scripts": {
