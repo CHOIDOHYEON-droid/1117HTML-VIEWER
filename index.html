@@ -155,6 +155,47 @@
             display: none;
         }
 
+        .sample-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .sample-title {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .sample-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .sample-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .sample-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        }
+
+        .sample-btn:active {
+            transform: translateY(0);
+        }
+
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 2em;
@@ -511,6 +552,14 @@
                 <p>탭하여 파일을 선택하세요</p>
             </div>
             <input type="file" id="fileInput" accept=".html,.htm" multiple>
+
+            <div class="sample-section">
+                <div class="sample-title">또는 샘플 모델 보기</div>
+                <div class="sample-buttons">
+                    <button class="sample-btn" onclick="loadSampleModel('sample1.html')">Sample 1 (Cube)</button>
+                    <button class="sample-btn" onclick="loadSampleModel('sample2.html')">Sample 2 (Sphere)</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -699,6 +748,28 @@
                     container.style.display = 'block';
                 }
                 externalFileOpened = false; // 플래그 리셋
+            }
+        }
+
+        // 샘플 모델 로드 함수
+        async function loadSampleModel(fileName) {
+            try {
+                console.log('Loading sample model:', fileName);
+
+                // 샘플 HTML 파일 로드
+                const response = await fetch(fileName);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${fileName}`);
+                }
+
+                const htmlContent = await response.text();
+                console.log('Sample model loaded successfully');
+
+                // 뷰어에서 열기
+                openViewer(fileName, htmlContent);
+            } catch (error) {
+                console.error('Error loading sample model:', error);
+                alert('샘플 모델을 불러오는데 실패했습니다: ' + error.message);
             }
         }
 
