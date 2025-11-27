@@ -10,6 +10,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // Store pending file URL when app is already running
     var pendingFileURL: URL?
 
+    // 지원하는 파일 확장자
+    let htmlExtensions = ["html", "htm"]
+    let modelExtensions = ["stl", "ply", "obj"]
+
     // Access to Capacitor's web view
     var capacitorViewController: CAPBridgeViewController? {
         return window?.rootViewController as? CAPBridgeViewController
@@ -21,7 +25,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Check if app was launched with a file URL
         if let url = launchOptions?[.url] as? URL {
             print("🚀 App launched with URL: \(url)")
-            if url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm" {
+            let ext = url.pathExtension.lowercased()
+
+            if htmlExtensions.contains(ext) || modelExtensions.contains(ext) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     self.openFileInWebView(url: url)
                 }
@@ -72,8 +78,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         print("📂 application(_:open:options:) called with URL: \(url)")
         print("   Options: \(options)")
 
-        // Handle HTML files
-        if url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm" {
+        let ext = url.pathExtension.lowercased()
+
+        // Handle HTML and 3D model files
+        if htmlExtensions.contains(ext) || modelExtensions.contains(ext) {
             // IMPORTANT: Clear old pendingFileURL and store new one
             print("🔄 Clearing old pending file (if any)")
             pendingFileURL = nil
@@ -131,104 +139,144 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
 
-        do {
-            let htmlContent = try String(contentsOf: url, encoding: .utf8)
-            let fileName = url.lastPathComponent
+        let ext = url.pathExtension.lowercased()
+        let fileName = url.lastPathComponent
 
-            print("✅ File read successfully: \(fileName) (Security scoped: \(didStartAccess))")
+        // 파일명 이스케이프
+        let escapedFileName = fileName
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "'", with: "\\'")
 
-            // Escape content for JavaScript
-            let escapedContent = htmlContent
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "\n", with: "\\n")
-                .replacingOccurrences(of: "\r", with: "\\r")
-                .replacingOccurrences(of: "'", with: "\\'")
+        // 1단계: 앱 상태 완전 초기화
+        let resetCode = """
+        (function() {
+            console.log('🔄 [Native] Resetting app for external file');
 
-            let escapedFileName = fileName
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "'", with: "\\'")
+            if (typeof window.resetAppForExternalFile === 'function') {
+                window.resetAppForExternalFile();
+                console.log('✅ [Native] App reset via function');
+            } else {
+                localStorage.clear();
+                var viewer = document.getElementById('htmlViewer');
+                var frame = document.getElementById('viewerFrame');
+                var viewer3D = document.getElementById('viewer3D');
+                var container = document.querySelector('.container');
+                if (viewer) viewer.classList.remove('active');
+                if (frame) frame.srcdoc = '';
+                if (viewer3D) viewer3D.classList.remove('active');
+                if (container) container.style.display = 'none';
+                window.externalFileOpened = true;
+                console.log('✅ [Native] App reset manually');
+            }
+        })();
+        """
 
-            // 1단계: 앱 상태 완전 초기화 (캐시 삭제, 뷰어 리셋)
-            let resetCode = """
-            (function() {
-                console.log('🔄 [Native] Resetting app for external file');
+        // HTML 파일 처리
+        if htmlExtensions.contains(ext) {
+            do {
+                let htmlContent = try String(contentsOf: url, encoding: .utf8)
+                print("✅ HTML file read successfully: \(fileName) (Security scoped: \(didStartAccess))")
 
-                // resetAppForExternalFile 함수 호출 (존재하면)
-                if (typeof window.resetAppForExternalFile === 'function') {
-                    window.resetAppForExternalFile();
-                    console.log('✅ [Native] App reset via function');
-                } else {
-                    // 함수가 없으면 직접 초기화
-                    localStorage.clear();
-                    var viewer = document.getElementById('htmlViewer');
-                    var frame = document.getElementById('viewerFrame');
-                    var container = document.querySelector('.container');
-                    if (viewer) viewer.classList.remove('active');
-                    if (frame) frame.srcdoc = '';
-                    if (container) container.style.display = 'none';
-                    window.externalFileOpened = true;
-                    console.log('✅ [Native] App reset manually');
-                }
-            })();
-            """
+                let escapedContent = htmlContent
+                    .replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: "\"", with: "\\\"")
+                    .replacingOccurrences(of: "\n", with: "\\n")
+                    .replacingOccurrences(of: "\r", with: "\\r")
+                    .replacingOccurrences(of: "'", with: "\\'")
 
-            webView.evaluateJavaScript(resetCode) { _, _ in
-                // 2단계: 초기화 완료 후 파일 열기 시도
-                let openFileCode = """
-                (function() {
-                    console.log('🚀 Attempting to open file from native');
+                webView.evaluateJavaScript(resetCode) { _, _ in
+                    let openFileCode = """
+                    (function() {
+                        console.log('🚀 Attempting to open HTML file from native');
+                        var attempts = 0;
+                        var maxAttempts = 50;
 
-                    // FileOpener가 준비될 때까지 최대 5초 대기
-                    var attempts = 0;
-                    var maxAttempts = 50;
+                        function tryOpen() {
+                            attempts++;
+                            if (typeof window.openExternalFile === 'function') {
+                                console.log('✅ openExternalFile found');
+                                window.openExternalFile("\(escapedFileName)", "\(escapedContent)", "text");
+                                return true;
+                            } else if (attempts < maxAttempts) {
+                                setTimeout(tryOpen, 100);
+                                return false;
+                            } else {
+                                console.error('❌ window.openExternalFile not found');
+                                window.location.reload();
+                                return false;
+                            }
+                        }
+                        tryOpen();
+                    })();
+                    """
 
-                    function tryOpen() {
-                        attempts++;
-                        console.log('Attempt ' + attempts + ': Checking for FileOpener...');
-
-                        if (typeof window.openExternalFile === 'function') {
-                            console.log('✅ openExternalFile found, calling it now');
-                            window.openExternalFile("\(escapedFileName)", "\(escapedContent)");
-                            return true;
-                        } else if (attempts < maxAttempts) {
-                            console.log('⏳ FileOpener not ready, retrying in 100ms...');
-                            setTimeout(tryOpen, 100);
-                            return false;
+                    webView.evaluateJavaScript(openFileCode) { result, error in
+                        if let error = error {
+                            print("❌ JavaScript error: \(error)")
                         } else {
-                            console.error('❌ window.openExternalFile not found after ' + attempts + ' attempts');
-                            console.log('Available:', Object.keys(window).filter(k => k.includes('open')));
+                            print("✅ JavaScript executed successfully")
+                        }
 
-                            // 최후의 수단: 페이지 새로고침으로 플래그 적용
-                            console.log('🔄 Reloading page to apply flag...');
-                            window.location.reload();
-                            return false;
+                        if self.pendingFileURL?.absoluteString == url.absoluteString {
+                            print("🧹 Clearing pendingFileURL for: \(url.lastPathComponent)")
+                            self.pendingFileURL = nil
                         }
                     }
+                }
+            } catch {
+                print("❌ Error reading HTML file: \(error)")
+            }
+        }
+        // 3D 모델 파일 처리 (STL, PLY, OBJ)
+        else if modelExtensions.contains(ext) {
+            do {
+                let data = try Data(contentsOf: url)
+                let base64Content = data.base64EncodedString()
+                print("✅ 3D file read successfully: \(fileName) (Size: \(data.count) bytes, Security scoped: \(didStartAccess))")
 
-                    tryOpen();
-                })();
-                """
+                webView.evaluateJavaScript(resetCode) { _, _ in
+                    let openFileCode = """
+                    (function() {
+                        console.log('🚀 Attempting to open 3D file from native');
+                        var attempts = 0;
+                        var maxAttempts = 50;
 
-                webView.evaluateJavaScript(openFileCode) { result, error in
-                    if let error = error {
-                        print("❌ JavaScript error: \\(error)")
-                    } else {
-                        print("✅ JavaScript executed successfully")
-                    }
+                        function tryOpen() {
+                            attempts++;
+                            if (typeof window.openExternalFile === 'function') {
+                                console.log('✅ openExternalFile found');
+                                window.openExternalFile("\(escapedFileName)", "\(base64Content)", "base64");
+                                return true;
+                            } else if (attempts < maxAttempts) {
+                                setTimeout(tryOpen, 100);
+                                return false;
+                            } else {
+                                console.error('❌ window.openExternalFile not found');
+                                window.location.reload();
+                                return false;
+                            }
+                        }
+                        tryOpen();
+                    })();
+                    """
 
-                    // IMPORTANT: Always clear pending file after execution attempt
-                    // (whether success or failure) to prevent duplicate opens
-                    if self.pendingFileURL?.absoluteString == url.absoluteString {
-                        print("🧹 Clearing pendingFileURL for: \\(url.lastPathComponent)")
-                        self.pendingFileURL = nil
+                    webView.evaluateJavaScript(openFileCode) { result, error in
+                        if let error = error {
+                            print("❌ JavaScript error: \(error)")
+                        } else {
+                            print("✅ JavaScript executed successfully")
+                        }
+
+                        if self.pendingFileURL?.absoluteString == url.absoluteString {
+                            print("🧹 Clearing pendingFileURL for: \(url.lastPathComponent)")
+                            self.pendingFileURL = nil
+                        }
                     }
                 }
+            } catch {
+                print("❌ Error reading 3D file: \(error)")
             }
-
-        } catch {
-            print("❌ Error reading file: \(error)")
         }
     }
 
