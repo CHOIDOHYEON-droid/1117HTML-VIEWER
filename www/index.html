@@ -918,6 +918,49 @@
         // ⭐ 최근 파일 기능 완전 제거됨
         // 모든 파일(직접 선택 + 외부)을 동일하게 처리: 뷰어에서만 표시, 저장 안함
 
+        // PWA share-handler에서 공유된 파일 처리
+        function checkSharedFile() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('shared') === 'true') {
+                const sharedData = localStorage.getItem('__shared_file');
+                if (sharedData) {
+                    try {
+                        const data = JSON.parse(sharedData);
+                        console.log('📂 Processing shared file:', data.name, 'type:', data.type);
+
+                        // 5초 이내의 파일만 처리 (오래된 데이터 무시)
+                        if (Date.now() - data.timestamp < 5000) {
+                            localStorage.removeItem('__shared_file');
+
+                            if (data.type === 'html') {
+                                window.openViewer(data.name, data.content);
+                            } else if (data.type === '3d') {
+                                // 3D 뷰어가 로드될 때까지 대기
+                                const tryOpen3D = () => {
+                                    if (typeof window.open3DFromBase64 === 'function') {
+                                        window.open3DFromBase64(data.content, data.name);
+                                    } else {
+                                        setTimeout(tryOpen3D, 100);
+                                    }
+                                };
+                                tryOpen3D();
+                            }
+                        } else {
+                            localStorage.removeItem('__shared_file');
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse shared file:', e);
+                        localStorage.removeItem('__shared_file');
+                    }
+                }
+                // URL에서 shared 파라미터 제거
+                window.history.replaceState({}, '', '/index.html');
+            }
+        }
+
+        // 페이지 로드 시 공유 파일 확인
+        checkSharedFile();
+
         // 일반 페이지 로드 시 (외부 파일 열기가 아닌 경우) 로딩 화면 숨기기
         setTimeout(() => {
             // 외부에서 파일이 열린 경우 메인 화면을 숨김 (뷰어만 표시)

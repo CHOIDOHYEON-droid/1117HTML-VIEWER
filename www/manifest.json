@@ -1,7 +1,7 @@
 {
-  "name": "DLAS Viewer - 치과 3D 모델",
-  "short_name": "DLAS Viewer",
-  "description": "DLAS - 치과 3D 모델 HTML 파일 뷰어",
+  "name": "HTML 뷰어 - 치과 3D 모델",
+  "short_name": "HTML 뷰어",
+  "description": "치과 3D 모델 HTML 파일을 쉽게 열고 볼 수 있는 뷰어 앱",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -33,7 +33,13 @@
       "files": [
         {
           "name": "file",
-          "accept": [".html", ".htm", "text/html"]
+          "accept": [
+            ".html", ".htm", "text/html",
+            ".stl", "model/stl",
+            ".ply", "model/ply",
+            ".obj", "model/obj",
+            "application/octet-stream"
+          ]
         }
       ]
     }

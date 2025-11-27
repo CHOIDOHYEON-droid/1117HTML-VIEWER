@@ -79,11 +79,15 @@
 <body>
     <div class="loading-container" id="loadingContainer">
         <div class="spinner"></div>
-        <h1>HTML 파일 열기 중...</h1>
+        <h1>파일 열기 중...</h1>
         <p>잠시만 기다려주세요</p>
     </div>
 
     <script>
+        // 지원하는 파일 확장자
+        const htmlExtensions = ['html', 'htm'];
+        const modelExtensions = ['stl', 'ply', 'obj'];
+
         async function handleSharedFile() {
             try {
                 // FormData에서 파일 가져오기
@@ -111,34 +115,73 @@
                     return;
                 }
 
-                // HTML 파일인지 확인
-                if (!file.name.match(/\.(html|htm)$/i) && file.type !== 'text/html') {
-                    showError('HTML 파일만 열 수 있습니다.');
-                    return;
-                }
-
-                // 파일 읽기
-                const content = await file.text();
-
-                // 최근 파일 목록에 추가
-                addToRecent(file.name, content);
-
-                // Blob URL 생성
-                const blob = new Blob([content], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-
-                // 새 창에서 열기
-                window.open(url, '_blank');
-
-                // 잠시 후 메인 페이지로 이동
-                setTimeout(() => {
-                    window.location.href = '/index.html';
-                }, 500);
+                // 파일 처리
+                await handleFile(file);
 
             } catch (error) {
                 console.error('파일 처리 오류:', error);
                 showError('파일을 여는 중 오류가 발생했습니다: ' + error.message);
             }
+        }
+
+        async function handleFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            console.log('📂 Processing file:', file.name, 'extension:', ext);
+
+            if (htmlExtensions.includes(ext) || file.type === 'text/html') {
+                // HTML 파일 처리
+                await handleHtmlFile(file);
+            } else if (modelExtensions.includes(ext)) {
+                // 3D 모델 파일 처리
+                await handle3DFile(file);
+            } else {
+                showError('지원하지 않는 파일 형식입니다: ' + ext);
+            }
+        }
+
+        async function handleHtmlFile(file) {
+            // 파일 읽기
+            const content = await file.text();
+
+            // localStorage에 파일 정보 저장 (index.html에서 읽을 수 있도록)
+            localStorage.setItem('__shared_file', JSON.stringify({
+                name: file.name,
+                content: content,
+                type: 'html',
+                timestamp: Date.now()
+            }));
+
+            // 메인 페이지로 이동 (index.html에서 처리)
+            window.location.href = '/index.html?shared=true';
+        }
+
+        async function handle3DFile(file) {
+            // 파일을 ArrayBuffer로 읽기
+            const arrayBuffer = await file.arrayBuffer();
+
+            // Base64로 인코딩
+            const base64 = arrayBufferToBase64(arrayBuffer);
+
+            // localStorage에 파일 정보 저장 (index.html에서 읽을 수 있도록)
+            localStorage.setItem('__shared_file', JSON.stringify({
+                name: file.name,
+                content: base64,
+                type: '3d',
+                timestamp: Date.now()
+            }));
+
+            // 메인 페이지로 이동 (index.html에서 처리)
+            window.location.href = '/index.html?shared=true';
+        }
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
         }
 
         async function getFormData() {
@@ -157,37 +200,11 @@
             return null;
         }
 
-        function addToRecent(fileName, content) {
-            try {
-                const MAX_RECENT_FILES = 10;
-                let recent = JSON.parse(localStorage.getItem('recentFiles') || '[]');
-
-                // 중복 제거
-                recent = recent.filter(item => item.name !== fileName);
-
-                // 새 항목 추가
-                recent.unshift({
-                    name: fileName,
-                    content: content,
-                    date: new Date().toISOString()
-                });
-
-                // 최대 개수 제한
-                if (recent.length > MAX_RECENT_FILES) {
-                    recent = recent.slice(0, MAX_RECENT_FILES);
-                }
-
-                localStorage.setItem('recentFiles', JSON.stringify(recent));
-            } catch (error) {
-                console.error('최근 파일 저장 실패:', error);
-            }
-        }
-
         function showError(message) {
             const container = document.getElementById('loadingContainer');
             container.innerHTML = `
                 <div class="error">
-                    <h1>⚠️ 오류</h1>
+                    <h1>오류</h1>
                     <p>${message}</p>
                     <a href="/index.html" class="back-button">메인 페이지로 돌아가기</a>
                 </div>
