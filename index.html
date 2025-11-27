@@ -196,6 +196,38 @@
             transform: translateY(0);
         }
 
+        /* 메인 화면 정보 버튼 */
+        .main-info-btn {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            background: #f0f0f0;
+            color: #333333;
+            border: 1px solid #d0d0d0;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        .main-info-btn:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        .main-info-btn:active {
+            transform: scale(0.95);
+        }
+
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 2em;
@@ -207,6 +239,14 @@
 
             .upload-box {
                 padding: 50px 20px;
+            }
+
+            .main-info-btn {
+                top: 45px;
+                right: 15px;
+                width: 32px;
+                height: 32px;
+                font-size: 1em;
             }
         }
 
@@ -523,7 +563,7 @@
     <div class="loading-screen" id="loadingScreen">
         <img src="white-logo.jpg" alt="DLAS Loading">
         <div class="legal-notice">이 앱은 일반적인 3D/HTML 파일 뷰어로, 의료기기(의료기기법 상 의료기기)가 아닙니다.<br>진단, 치료, 수술 계획 등 의료 목적에는 사용하지 마십시오.</div>
-        <div class="version-info">DLAS v1.1 ⓒ 2025 Dental Lab Automation Solution - All rights reserved</div>
+        <div class="version-info">DLAS v1.2 ⓒ 2025 Dental Lab Automation Solution - All rights reserved</div>
     </div>
 
     <!-- HTML 뷰어 오버레이 -->
@@ -537,6 +577,9 @@
         </div>
         <iframe class="viewer-iframe" id="viewerFrame" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups"></iframe>
     </div>
+
+    <!-- 메인 화면 정보 버튼 -->
+    <button class="main-info-btn" id="mainInfoBtn" onclick="openInfoModal()">ⓘ</button>
 
     <div class="container">
         <div class="header">
@@ -961,7 +1004,7 @@
             <div class="info-modal-body">
                 <div class="license-section">
                     <h4>버전 정보</h4>
-                    <p>DLAS Viewer v1.1</p>
+                    <p>DLAS Viewer v1.2</p>
                     <p>ⓒ 2025 Dental Lab Automation Solution</p>
                 </div>
 

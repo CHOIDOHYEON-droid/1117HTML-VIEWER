@@ -25,3 +25,4 @@ ios/App/build/
 *.mobileprovision
 *.certSigningRequest
 CertificateSigningRequest.certSigningRequest
+__pycache__/
