@@ -12,6 +12,14 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <script src="file-opener.js"></script>
     <script src="capacitor.js"></script>
+
+    <!-- Three.js 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/PLYLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -1159,87 +1167,57 @@ The above copyright notice and this permission notice shall be included in all c
                 <button class="viewer-info-btn" onclick="openInfoModal()">ⓘ</button>
             </div>
         </div>
-        <div id="viewer-3d" style="flex: 1; width: 100%; background: #222222;"></div>
+        <div id="viewer-3d" style="flex: 1; width: 100%; background: #eeeeee;"></div>
     </div>
 
-    <!-- Three.js 라이브러리 (전역 THREE 사용) -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/STLLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/PLYLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/OBJLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-
     <script>
-        // ===== 1) 기본 3D 씬 셋업 =====
+        // ===== 3D 뷰어 (전역 THREE 사용) =====
         let renderer, scene, camera, controls;
-        const container3D = document.getElementById('viewer-3d');
 
-        function init3D() {
-            if (renderer) return;
+        function init3DViewer() {
+            const container = document.getElementById('viewer-3d');
+            container.innerHTML = '';
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(container3D.clientWidth, container3D.clientHeight);
-            container3D.appendChild(renderer.domElement);
+            const width = container.clientWidth || window.innerWidth;
+            const height = container.clientHeight || window.innerHeight;
 
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
+            scene.background = new THREE.Color(0xeeeeee);
 
-            camera = new THREE.PerspectiveCamera(
-                45,
-                container3D.clientWidth / container3D.clientHeight,
-                0.1,
-                2000
-            );
-            camera.position.set(0, 0, 200);
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+            camera.position.set(0, 0, 100);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
 
-            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(1, 1, 1);
+            scene.add(light);
+
+            const ambient = new THREE.AmbientLight(0x888888);
             scene.add(ambient);
 
-            const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-            dir.position.set(100, 100, 100);
-            scene.add(dir);
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
 
-            window.addEventListener('resize', onWindowResize3D);
-            animate3D();
-        }
-
-        function onWindowResize3D() {
-            if (!renderer || !camera || !container3D) return;
-            const w = container3D.clientWidth;
-            const h = container3D.clientHeight;
-            camera.aspect = w / h;
-            camera.updateProjectionMatrix();
-            renderer.setSize(w, h);
-        }
-
-        function animate3D() {
-            requestAnimationFrame(animate3D);
-            if (controls) controls.update();
-            if (renderer && scene && camera) renderer.render(scene, camera);
-        }
-
-        function clear3DScene() {
-            if (!scene) return;
-            const remove = [];
-            scene.traverse(function(obj) {
-                if (obj.isMesh || obj.isGroup) remove.push(obj);
-            });
-            remove.forEach(function(obj) {
-                scene.remove(obj);
-                if (obj.geometry) obj.geometry.dispose();
-                if (obj.material) {
-                    if (Array.isArray(obj.material)) {
-                        obj.material.forEach(function(m) { m.dispose(); });
-                    } else obj.material.dispose();
-                }
+            window.addEventListener('resize', function() {
+                const w = container.clientWidth || window.innerWidth;
+                const h = container.clientHeight || window.innerHeight;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
             });
         }
 
-        function fitObjectToView(object) {
+        function fitCameraToObject(object) {
             const box = new THREE.Box3().setFromObject(object);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
@@ -1248,8 +1226,8 @@ The above copyright notice and this permission notice shall be included in all c
 
             const maxDim = Math.max(size.x, size.y, size.z);
             const fov = camera.fov * (Math.PI / 180);
-            var cameraZ = (maxDim / 2) / Math.tan(fov / 2);
-            cameraZ *= 2.2;
+            let cameraZ = (maxDim / 2) / Math.tan(fov / 2);
+            cameraZ *= 2.5;
 
             camera.position.set(0, 0, cameraZ);
             camera.near = maxDim / 100;
@@ -1260,20 +1238,18 @@ The above copyright notice and this permission notice shall be included in all c
             controls.update();
         }
 
-        function addGeometry(geometry) {
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xcccccc,
-                metalness: 0.1,
-                roughness: 0.8
-            });
-            const mesh = new THREE.Mesh(geometry, material);
-            fitObjectToView(mesh);
-            scene.add(mesh);
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
         }
 
-        // ===== 2) File 객체에서 직접 열기 =====
+        // File 객체에서 직접 열기
         function open3DFromFile(file) {
-            // 3D 뷰어 오버레이 표시
             const viewer3D = document.getElementById('viewer3D');
             const title = document.getElementById('viewer3DTitle');
             viewer3D.classList.add('active');
@@ -1281,46 +1257,52 @@ The above copyright notice and this permission notice shall be included in all c
             const displayName = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
             title.textContent = displayName;
 
-            // 로딩 화면 숨기기
             const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) loadingScreen.classList.add('hidden');
 
-            init3D();
-            clear3DScene();
-            onWindowResize3D();
+            init3DViewer();
 
             const ext = file.name.split('.').pop().toLowerCase();
             const reader = new FileReader();
 
-            if (ext === 'stl') {
-                reader.onload = function(e) {
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+
+                if (ext === 'stl') {
                     const loader = new THREE.STLLoader();
-                    const geometry = loader.parse(e.target.result);
-                    addGeometry(geometry);
-                };
-                reader.readAsArrayBuffer(file);
-            } else if (ext === 'ply') {
-                reader.onload = function(e) {
+                    const geometry = loader.parse(arrayBuffer);
+                    geometry.center();
+                    const material = new THREE.MeshPhongMaterial({ color: 0x555555 });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    fitCameraToObject(mesh);
+                    scene.add(mesh);
+                } else if (ext === 'ply') {
                     const loader = new THREE.PLYLoader();
-                    const geometry = loader.parse(e.target.result);
+                    const geometry = loader.parse(arrayBuffer);
                     geometry.computeVertexNormals();
-                    addGeometry(geometry);
-                };
-                reader.readAsArrayBuffer(file);
-            } else if (ext === 'obj') {
-                reader.onload = function(e) {
+                    geometry.center();
+                    const material = new THREE.MeshPhongMaterial({ color: 0x555555 });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    fitCameraToObject(mesh);
+                    scene.add(mesh);
+                } else if (ext === 'obj') {
+                    const text = new TextDecoder().decode(new Uint8Array(arrayBuffer));
                     const loader = new THREE.OBJLoader();
-                    const obj = loader.parse(e.target.result);
-                    fitObjectToView(obj);
+                    const obj = loader.parse(text);
+                    fitCameraToObject(obj);
                     scene.add(obj);
-                };
-                reader.readAsText(file);
+                }
+            };
+
+            if (ext === 'obj') {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsArrayBuffer(file);
             }
         }
 
-        // ===== 3) iOS에서 base64 문자열로 넘어오는 경우 =====
+        // iOS에서 base64 문자열로 넘어오는 경우
         function open3DFromBase64(base64, fileName) {
-            // 3D 뷰어 오버레이 표시
             const viewer3D = document.getElementById('viewer3D');
             const title = document.getElementById('viewer3DTitle');
             viewer3D.classList.add('active');
@@ -1328,48 +1310,73 @@ The above copyright notice and this permission notice shall be included in all c
             const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
             title.textContent = displayName;
 
-            // 로딩 화면 숨기기
             const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) loadingScreen.classList.add('hidden');
 
-            init3D();
-            clear3DScene();
-            onWindowResize3D();
+            init3DViewer();
 
             const ext = fileName.split('.').pop().toLowerCase();
-            const binary = atob(base64);
-            const len = binary.length;
-            const arrayBuffer = new ArrayBuffer(len);
-            const view = new Uint8Array(arrayBuffer);
-            for (var i = 0; i < len; i++) view[i] = binary.charCodeAt(i);
+            const arrayBuffer = base64ToArrayBuffer(base64);
 
             if (ext === 'stl') {
                 const loader = new THREE.STLLoader();
                 const geometry = loader.parse(arrayBuffer);
-                addGeometry(geometry);
+                geometry.center();
+                const material = new THREE.MeshPhongMaterial({ color: 0x555555 });
+                const mesh = new THREE.Mesh(geometry, material);
+                fitCameraToObject(mesh);
+                scene.add(mesh);
             } else if (ext === 'ply') {
                 const loader = new THREE.PLYLoader();
                 const geometry = loader.parse(arrayBuffer);
                 geometry.computeVertexNormals();
-                addGeometry(geometry);
+                geometry.center();
+                const material = new THREE.MeshPhongMaterial({ color: 0x555555 });
+                const mesh = new THREE.Mesh(geometry, material);
+                fitCameraToObject(mesh);
+                scene.add(mesh);
             } else if (ext === 'obj') {
+                const text = new TextDecoder().decode(new Uint8Array(arrayBuffer));
                 const loader = new THREE.OBJLoader();
-                const text = new TextDecoder().decode(view);
                 const obj = loader.parse(text);
-                fitObjectToView(obj);
+                fitCameraToObject(obj);
                 scene.add(obj);
             }
         }
 
-        // ===== 4) 전역 함수로 노출 =====
+        // 전역 함수로 노출
         window.open3DFromFile = open3DFromFile;
         window.open3DFromBase64 = open3DFromBase64;
 
-        // ===== 5) 3D 뷰어 닫기 함수 =====
+        // 3D 뷰어 닫기 함수
         window.close3DViewer = function() {
             const viewer3D = document.getElementById('viewer3D');
             viewer3D.classList.remove('active');
-            clear3DScene();
+
+            // 씬 정리
+            if (scene) {
+                while(scene.children.length > 0) {
+                    const obj = scene.children[0];
+                    scene.remove(obj);
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) {
+                        if (Array.isArray(obj.material)) {
+                            obj.material.forEach(function(m) { m.dispose(); });
+                        } else {
+                            obj.material.dispose();
+                        }
+                    }
+                }
+            }
+
+            // renderer 정리
+            if (renderer) {
+                renderer.dispose();
+                renderer = null;
+            }
+            scene = null;
+            camera = null;
+            controls = null;
         };
 
         console.log('✅ Three.js 3D Viewer loaded (global THREE)');
