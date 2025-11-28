@@ -1670,34 +1670,37 @@ The above copyright notice and this permission notice shall be included in all c
     return bytes.buffer;
   }
 
-  function open3DFromBase64(base64, fileName) {
+  // MIME 타입 추측 헬퍼
+  function guessMimeType(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
-    console.log('📂 [3D] open3DFromBase64', fileName, 'ext:', ext);
+    if (ext === 'stl') return 'model/stl';
+    if (ext === 'ply') return 'model/ply';
+    if (ext === 'obj') return 'model/obj';
+    return 'application/octet-stream';
+  }
 
-    // 파일명 표시 (20자 제한)
-    const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
+  // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 (통합 버전) =====
+  // Base64 → File 객체 변환 후 open3DFromFile 호출하여 경로 통일
+  function open3DFromBase64(base64, fileName) {
+    console.log('📂 [3D] open3DFromBase64 wrapper:', fileName);
 
+    // Base64 → ArrayBuffer 변환
+    const buffer = base64ToArrayBuffer(base64);
+    const mime = guessMimeType(fileName);
+
+    // File 객체 생성 (iOS Safari 호환성을 위해 Blob fallback)
+    let file;
     try {
-      init3DViewer();
-      clear3DScene();
-      show3DOverlay(displayName);
-
-      if (ext === 'stl' || ext === 'ply') {
-        const buffer = base64ToArrayBuffer(base64);
-        console.log('📥 Base64 → ArrayBuffer:', buffer.byteLength, 'bytes');
-        load3DFromArrayBuffer(buffer, ext);
-      } else if (ext === 'obj') {
-        // OBJ는 텍스트 포맷 → atob로 직접 문자열 디코딩 (TextDecoder 대신, iOS 호환성)
-        const text = atob(base64);
-        console.log('📥 Base64 → Text:', text.length, 'chars');
-        loadOBJFromString(text);
-      } else {
-        alert('지원하지 않는 3D 형식입니다: ' + ext);
-      }
-    } catch (err) {
-      console.error('❌ open3DFromBase64 오류:', err);
-      alert('3D 로딩 중 오류: ' + err.message);
+      file = new File([buffer], fileName, { type: mime });
+    } catch (e) {
+      // iOS Safari 구버전에서 File 생성자 미지원 시 Blob 사용
+      const blob = new Blob([buffer], { type: mime });
+      blob.name = fileName;
+      file = blob;
     }
+
+    // 통일된 경로로 호출 - 브라우저와 동일한 코드 경로 사용
+    window.open3DFromFile(file);
   }
 
   // ===== 닫기 =====
