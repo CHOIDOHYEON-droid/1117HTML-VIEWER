@@ -715,83 +715,50 @@
             console.log('✅ App state reset complete');
         };
 
-        // FileOpener 리스너 등록 (즉시 실행)
+        // FileOpener 리스너 등록 (즉시 실행) - 간결하고 안전한 버전
         if (window.FileOpener) {
             window.FileOpener.addListener((data) => {
+                console.log('📩 FileOpener event:', data);
+                const fileName = data.fileName || 'unnamed';
+                const ext = fileName.split('.').pop().toLowerCase();
+                const encoding = data.encoding || 'text';
+
+                // 중복 실행 방지
                 const now = Date.now();
-                console.log('🎯 File opened via FileOpener:', data.fileName);
-                console.log('📊 Data keys:', Object.keys(data));
-                console.log('📏 Content length:', data.content ? data.content.length : 0);
-                console.log('🔤 Content preview:', data.content ? data.content.substring(0, 100) : 'null');
-
-                // 디버그: 파일 수신 확인 alert
-                const ext = data.fileName ? data.fileName.split('.').pop().toLowerCase() : 'unknown';
-                const contentLen = data.content ? data.content.length : 0;
-                alert('파일 수신: ' + data.fileName + '\n확장자: ' + ext + '\n데이터 길이: ' + contentLen);
-
-                // IMPORTANT: 중복 실행 방지 - 같은 파일이 100ms 이내에 다시 열리는 것 방지
-                if (lastOpenedFile.name === data.fileName && (now - lastOpenedFile.timestamp) < 100) {
+                if (lastOpenedFile.name === fileName && (now - lastOpenedFile.timestamp) < 100) {
                     console.log('⏭️ Skipping duplicate file open');
                     return;
                 }
+                lastOpenedFile = { name: fileName, timestamp: now };
 
-                // 마지막 파일 정보 업데이트
-                lastOpenedFile = { name: data.fileName, timestamp: now };
-
-                // ⭐ 핵심: 외부 파일 열기 전에 앱 완전 초기화
+                // 앱 상태 초기화
                 window.resetAppForExternalFile();
 
-                // 확장자에 따라 분기 (위에서 이미 ext 선언됨)
-                const fileExt = data.fileName.split('.').pop().toLowerCase();
-                console.log('📂 File extension:', fileExt);
+                // 3D 파일 (STL, PLY, OBJ)
+                if (ext === 'stl' || ext === 'ply' || ext === 'obj') {
+                    console.log('🔧 Processing 3D file:', ext, 'encoding:', encoding);
+                    // base64든 텍스트든 모두 open3DFromBase64로 처리
+                    window.open3DFromBase64(data.content, fileName);
+                    return;
+                }
 
-                setTimeout(() => {
-                    const encoding = data.encoding || 'text';
-                    console.log('📦 File encoding:', encoding);
+                // HTML 파일
+                if (ext === 'html' || ext === 'htm') {
+                    let htmlText = data.content;
 
-                    if (fileExt === 'stl' || fileExt === 'ply' || fileExt === 'obj') {
-                        console.log('🔧 Processing 3D file:', fileExt);
-
-                        // content가 없는 경우 체크
-                        if (!data.content) {
-                            console.error('❌ No content received for 3D file');
-                            alert('3D 파일 데이터를 받지 못했습니다.');
-                            return;
+                    if (encoding === 'base64') {
+                        try {
+                            htmlText = atob(data.content);
+                        } catch (e) {
+                            console.error('Base64 HTML 디코딩 실패:', e);
                         }
-
-                        // 3D 파일 처리
-                        if (typeof window.open3DFromBase64 === 'function') {
-                            try {
-                                console.log('🚀 Calling open3DFromBase64...');
-                                window.open3DFromBase64(data.content, data.fileName);
-                                console.log('✅ 3D file opened:', data.fileName);
-                            } catch (err) {
-                                console.error('❌ Error opening 3D file:', err);
-                                alert('3D 파일 열기 오류: ' + err.message);
-                            }
-                        } else {
-                            console.log('⏳ 3D viewer not ready, waiting...');
-                            // 3D 뷰어가 아직 로드되지 않았으면 잠시 대기 후 재시도
-                            setTimeout(() => {
-                                if (typeof window.open3DFromBase64 === 'function') {
-                                    try {
-                                        window.open3DFromBase64(data.content, data.fileName);
-                                    } catch (err) {
-                                        console.error('❌ Error opening 3D file (retry):', err);
-                                        alert('3D 파일 열기 오류: ' + err.message);
-                                    }
-                                } else {
-                                    alert('3D 뷰어를 로드할 수 없습니다.');
-                                }
-                            }, 500);
-                        }
-                    } else {
-                        // HTML 파일 처리
-                        const htmlContent = encoding === 'base64' ? atob(data.content) : data.content;
-                        window.openViewer(data.fileName, htmlContent);
-                        console.log('🖥️ HTML file opened:', data.fileName);
                     }
-                }, 50);
+
+                    window.openViewer(fileName, htmlText);
+                    return;
+                }
+
+                alert('지원하지 않는 파일 형식입니다: ' + ext);
             });
             console.log('✅ FileOpener listener registered');
         } else {
