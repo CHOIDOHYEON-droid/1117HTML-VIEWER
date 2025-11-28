@@ -741,16 +741,16 @@
                 // ⭐ 핵심: 외부 파일 열기 전에 앱 완전 초기화
                 window.resetAppForExternalFile();
 
-                // 확장자에 따라 분기
-                const ext = data.fileName.split('.').pop().toLowerCase();
-                console.log('📂 File extension:', ext);
+                // 확장자에 따라 분기 (위에서 이미 ext 선언됨)
+                const fileExt = data.fileName.split('.').pop().toLowerCase();
+                console.log('📂 File extension:', fileExt);
 
                 setTimeout(() => {
                     const encoding = data.encoding || 'text';
                     console.log('📦 File encoding:', encoding);
 
-                    if (ext === 'stl' || ext === 'ply' || ext === 'obj') {
-                        console.log('🔧 Processing 3D file:', ext);
+                    if (fileExt === 'stl' || fileExt === 'ply' || fileExt === 'obj') {
+                        console.log('🔧 Processing 3D file:', fileExt);
 
                         // content가 없는 경우 체크
                         if (!data.content) {
