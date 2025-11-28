@@ -724,6 +724,11 @@
                 console.log('📏 Content length:', data.content ? data.content.length : 0);
                 console.log('🔤 Content preview:', data.content ? data.content.substring(0, 100) : 'null');
 
+                // 디버그: 파일 수신 확인 alert
+                const ext = data.fileName ? data.fileName.split('.').pop().toLowerCase() : 'unknown';
+                const contentLen = data.content ? data.content.length : 0;
+                alert('파일 수신: ' + data.fileName + '\n확장자: ' + ext + '\n데이터 길이: ' + contentLen);
+
                 // IMPORTANT: 중복 실행 방지 - 같은 파일이 100ms 이내에 다시 열리는 것 방지
                 if (lastOpenedFile.name === data.fileName && (now - lastOpenedFile.timestamp) < 100) {
                     console.log('⏭️ Skipping duplicate file open');
@@ -1646,6 +1651,9 @@ The above copyright notice and this permission notice shall be included in all c
     const ext = fileName.split('.').pop().toLowerCase();
     console.log('📂 [3D] open3DFromBase64', fileName, 'ext:', ext);
 
+    // 디버그 alert
+    alert('open3DFromBase64 호출됨\n파일: ' + fileName + '\nBase64 길이: ' + (base64 ? base64.length : 0));
+
     // 파일명 표시 (20자 제한)
     const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
 
@@ -1663,6 +1671,7 @@ The above copyright notice and this permission notice shall be included in all c
     try {
       buffer = base64ToArrayBuffer(base64);
       console.log('📥 Base64 변환 완료, 버퍼 크기:', buffer.byteLength);
+      alert('Buffer 변환 완료: ' + buffer.byteLength + ' bytes');
     } catch (err) {
       console.error('❌ Base64 변환 오류:', err);
       alert('파일 데이터 변환 실패: ' + err.message);
