@@ -15,9 +15,7 @@
 
     <!-- Three.js 라이브러리 (0.147.0 - examples/js 지원하는 마지막 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/PLYLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/OBJLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/TrackballControls.js"></script>
 
     <style>
@@ -25,6 +23,16 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        /* 공통 드래그 방지 스타일 */
+        .no-drag, body, img {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
         }
 
         body {
@@ -38,13 +46,6 @@
             justify-content: center;
             padding: 20px;
             color: #333333;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-user-drag: none;
         }
 
         .container {
@@ -56,10 +57,6 @@
             text-align: center;
             color: #333333;
             margin-bottom: 25px;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
         }
 
         .header h1 {
@@ -73,13 +70,6 @@
             width: 70%;
             height: auto;
             margin-bottom: 15px;
-            /* 이미지 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-user-drag: none;
-            -webkit-touch-callout: none;
             pointer-events: none;
         }
 
@@ -271,13 +261,6 @@
             background: #F5F5F5;
             z-index: 10000;
             flex-direction: column;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-user-drag: none;
         }
 
         .html-viewer-overlay.active {
@@ -311,20 +294,12 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 50px;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-user-drag: none;
-            -webkit-touch-callout: none;
         }
 
         .viewer-title {
             font-size: 0.9em;
             color: #333333;
             font-weight: 600;
-            user-select: none;
-            -webkit-user-select: none;
             pointer-events: none;
             max-width: 200px;
             overflow: hidden;
@@ -517,13 +492,6 @@
             flex: 1;
             border: none;
             width: 100%;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-user-drag: none;
             pointer-events: auto;
         }
 
@@ -558,13 +526,6 @@
             opacity: 1;
             transition: opacity 0.3s ease;
             padding: 20px;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-user-drag: none;
         }
 
         .loading-screen.hidden {
@@ -579,13 +540,6 @@
             height: auto;
             object-fit: contain;
             display: block;
-            /* 이미지 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-user-drag: none;
-            -webkit-touch-callout: none;
             pointer-events: none;
         }
 
@@ -601,10 +555,6 @@
             max-width: none;
             line-height: 1.4;
             padding: 0;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
             pointer-events: none;
         }
 
@@ -617,10 +567,6 @@
             color: #999999;
             text-align: center;
             white-space: nowrap;
-            /* 드래그 방지 */
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
             pointer-events: none;
         }
     </style>
@@ -659,9 +605,9 @@
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,19V15H15L11.5,11L8,15H10V19Z"/>
                 </svg>
                 <h2>파일 선택</h2>
-                <p>HTML, STL, PLY, OBJ 파일 지원</p>
+                <p>HTML, PLY 파일 지원</p>
             </div>
-            <input type="file" id="fileInput" accept=".html,.htm,.stl,.ply,.obj" multiple>
+            <input type="file" id="fileInput" accept=".html,.htm,.ply" multiple>
         </div>
     </div>
 
@@ -669,7 +615,6 @@
         // Capacitor 초기화 대기
         let isNative = false;
         let App, Filesystem;
-        let deferredPrompt;
         let externalFileOpened = false; // 외부 파일 열림 플래그
 
         // 앱 시작 시 외부 파일 열기 플래그 체크
@@ -734,10 +679,9 @@
                 // 앱 상태 초기화
                 window.resetAppForExternalFile();
 
-                // 3D 파일 (STL, PLY, OBJ)
-                if (ext === 'stl' || ext === 'ply' || ext === 'obj') {
+                // 3D 파일 (PLY만 지원)
+                if (ext === 'ply') {
                     console.log('🔧 Processing 3D file:', ext, 'encoding:', encoding);
-                    // base64든 텍스트든 모두 open3DFromBase64로 처리
                     window.open3DFromBase64(data.content, fileName);
                     return;
                 }
@@ -931,8 +875,8 @@
                 const ext = file.name.split('.').pop().toLowerCase();
                 console.log('📂 [직접 선택] 파일 열기:', file.name, '확장자:', ext);
 
-                // 3D 파일인 경우
-                if (ext === 'stl' || ext === 'ply' || ext === 'obj') {
+                // 3D 파일인 경우 (PLY만 지원)
+                if (ext === 'ply') {
                     if (typeof window.open3DFromFile === 'function') {
                         window.open3DFromFile(file);
                     } else {
@@ -1211,9 +1155,10 @@ The above copyright notice and this permission notice shall be included in all c
     </div>
 
 <script>
-  // ===== 3D 뷰어 (전역 THREE 사용, 테스트용 완전 버전) =====
+  // ===== 3D 뷰어 =====
   let renderer, scene, camera, controls;
   let viewer3DContainer = null;
+  let animationId = null; // 애니메이션 루프 제어용
   const ray = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
@@ -1257,17 +1202,9 @@ The above copyright notice and this permission notice shall be included in all c
       console.error('THREE.js가 로드되지 않았습니다.');
       throw new Error('THREE.js가 로드되지 않았습니다.');
     }
-    if (typeof THREE.STLLoader === 'undefined') {
-      console.error('STLLoader가 로드되지 않았습니다.');
-      throw new Error('STLLoader가 로드되지 않았습니다.');
-    }
     if (typeof THREE.PLYLoader === 'undefined') {
       console.error('PLYLoader가 로드되지 않았습니다.');
       throw new Error('PLYLoader가 로드되지 않았습니다.');
-    }
-    if (typeof THREE.OBJLoader === 'undefined') {
-      console.error('OBJLoader가 로드되지 않았습니다.');
-      throw new Error('OBJLoader가 로드되지 않았습니다.');
     }
 
     const w = viewer3DContainer.clientWidth || window.innerWidth;
@@ -1284,7 +1221,8 @@ The above copyright notice and this permission notice shall be included in all c
     camera.position.set(0, 0, 1000);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // 고해상도 디스플레이 성능 최적화: pixelRatio 2로 제한
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h);
     viewer3DContainer.appendChild(renderer.domElement);
 
@@ -1328,8 +1266,10 @@ The above copyright notice and this permission notice shall be included in all c
 
     window.addEventListener('resize', on3DWindowResize);
 
+    // 애니메이션 루프 (닫을 때 중지됨)
     function animate() {
-      requestAnimationFrame(animate);
+      if (!renderer || !scene || !camera) return;
+      animationId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
@@ -1549,65 +1489,27 @@ The above copyright notice and this permission notice shall be included in all c
 
   // ===== 공통 로더 함수 (브라우저 + iOS 모두 사용) =====
 
-  // STL/PLY용: ArrayBuffer → 씬에 메쉬 추가
-  function load3DFromArrayBuffer(buffer, ext) {
-    console.log('📥 load3DFromArrayBuffer:', ext, 'size:', buffer.byteLength);
+  // PLY용: ArrayBuffer → 씬에 메쉬 추가
+  function load3DFromArrayBuffer(buffer) {
+    console.log('📥 load3DFromArrayBuffer (PLY), size:', buffer.byteLength);
 
-    if (ext === 'stl') {
-      const loader = new THREE.STLLoader();
-      const geometry = loader.parse(buffer);
-      console.log('🧱 STL geometry:', geometry);
-      const material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
-      const mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
-      fitCameraToObject(mesh);
-      console.log('✅ STL 로드 완료');
-    } else if (ext === 'ply') {
-      const loader = new THREE.PLYLoader();
-      const geometry = loader.parse(buffer);
-      geometry.computeVertexNormals();
-      console.log('🧱 PLY geometry:', geometry);
-      // 버텍스 컬러가 있으면 원본 색상 사용
-      let material;
-      if (geometry.attributes.color) {
-        material = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide });
-        console.log('🎨 PLY vertex colors detected');
-      } else {
-        material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
-      }
-      const mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
-      fitCameraToObject(mesh);
-      console.log('✅ PLY 로드 완료');
+    const loader = new THREE.PLYLoader();
+    const geometry = loader.parse(buffer);
+    geometry.computeVertexNormals();
+    console.log('🧱 PLY geometry:', geometry);
+
+    // 버텍스 컬러가 있으면 원본 색상 사용
+    let material;
+    if (geometry.attributes.color) {
+      material = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide });
+      console.log('🎨 PLY vertex colors detected');
+    } else {
+      material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
     }
-  }
-
-  // OBJ용: 문자열 → 씬에 오브젝트 추가
-  function loadOBJFromString(text) {
-    console.log('📥 loadOBJFromString, length:', text.length);
-    const loader = new THREE.OBJLoader();
-    const obj = loader.parse(text);
-    console.log('🧱 OBJ object:', obj);
-    // OBJ의 모든 메시에 버텍스 컬러 또는 기본 색상 적용
-    obj.traverse(function(child) {
-      if (child.isMesh) {
-        if (child.geometry && child.geometry.attributes.color) {
-          child.material = new THREE.MeshPhongMaterial({
-            vertexColors: true,
-            side: THREE.DoubleSide
-          });
-          console.log('🎨 OBJ vertex colors detected');
-        } else {
-          child.material = new THREE.MeshPhongMaterial({
-            color: 0xdddddd,
-            side: THREE.DoubleSide
-          });
-        }
-      }
-    });
-    scene.add(obj);
-    fitCameraToObject(obj);
-    console.log('✅ OBJ 로드 완료');
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    fitCameraToObject(mesh);
+    console.log('✅ PLY 로드 완료');
   }
 
   // ===== 브라우저/앱 공통: File/Blob 객체에서 3D 파일 열기 =====
@@ -1638,30 +1540,18 @@ The above copyright notice and this permission notice shall be included in all c
       alert('파일을 읽을 수 없습니다.');
     };
 
-    if (ext === 'stl' || ext === 'ply') {
+    if (ext === 'ply') {
       reader.onload = e => {
         try {
           const buffer = e.target.result;
           console.log('📦 ArrayBuffer length:', buffer.byteLength);
-          load3DFromArrayBuffer(buffer, ext);
+          load3DFromArrayBuffer(buffer);
         } catch (err) {
           console.error('❌ 3D 파일 파싱 오류:', err);
           alert('3D 파일 로드 실패: ' + err.message);
         }
       };
       reader.readAsArrayBuffer(file);
-    } else if (ext === 'obj') {
-      reader.onload = e => {
-        try {
-          const text = e.target.result;
-          console.log('📜 OBJ text length:', text.length);
-          loadOBJFromString(text);
-        } catch (err) {
-          console.error('❌ OBJ 파일 파싱 오류:', err);
-          alert('OBJ 파일 로드 실패: ' + err.message);
-        }
-      };
-      reader.readAsText(file);
     } else {
       alert('지원하지 않는 3D 형식입니다: ' + ext);
     }
@@ -1683,9 +1573,7 @@ The above copyright notice and this permission notice shall be included in all c
   // 확장자 기반 MIME 추측
   function guessMimeType(fileName) {
     const ext = (fileName.split('.').pop() || '').trim().toLowerCase();
-    if (ext === 'stl') return 'model/stl';
     if (ext === 'ply') return 'model/ply';
-    if (ext === 'obj') return 'model/obj';
     return 'application/octet-stream';
   }
 
@@ -1723,16 +1611,34 @@ The above copyright notice and this permission notice shall be included in all c
     const overlay = document.getElementById('viewer3DOverlay');
     if (overlay) overlay.classList.remove('active');
 
+    // 애니메이션 루프 중지
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+
+    // 씬 정리
     if (scene) {
       clear3DScene();
       scene = null;
     }
+
+    // 렌더러 정리
     if (renderer) {
       renderer.dispose();
+      renderer.forceContextLoss();
+      renderer.domElement = null;
       renderer = null;
     }
+
+    // 컨트롤 정리
+    if (controls) {
+      controls.dispose();
+      controls = null;
+    }
+
     camera = null;
-    controls = null;
+    viewer3DContainer = null;
 
     // 메인 화면 표시
     const container = document.querySelector('.container');

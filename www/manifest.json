@@ -35,9 +35,7 @@
           "name": "file",
           "accept": [
             ".html", ".htm", "text/html",
-            ".stl", "model/stl",
             ".ply", "model/ply",
-            ".obj", "model/obj",
             "application/octet-stream"
           ]
         }
