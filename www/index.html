@@ -1461,10 +1461,22 @@ The above copyright notice and this permission notice shall be included in all c
         const loader = new THREE.OBJLoader();
         const obj = loader.parse(text);
         console.log('🧱 OBJ object:', obj);
-        // OBJ의 모든 메시에 양면 렌더링 적용
+        // OBJ의 모든 메시에 색상 및 양면 렌더링 적용
         obj.traverse(function(child) {
-          if (child.isMesh && child.material) {
-            child.material.side = THREE.DoubleSide;
+          if (child.isMesh) {
+            // 버텍스 컬러가 있으면 사용, 없으면 회색
+            if (child.geometry && child.geometry.attributes.color) {
+              child.material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide
+              });
+              console.log('🎨 OBJ vertex colors detected');
+            } else {
+              child.material = new THREE.MeshPhongMaterial({
+                color: 0xdddddd,
+                side: THREE.DoubleSide
+              });
+            }
           }
         });
         scene.add(obj);
@@ -1526,10 +1538,22 @@ The above copyright notice and this permission notice shall be included in all c
       const loader = new THREE.OBJLoader();
       const obj = loader.parse(text);
       console.log('🧱 OBJ object (base64):', obj);
-      // OBJ의 모든 메시에 양면 렌더링 적용
+      // OBJ의 모든 메시에 색상 및 양면 렌더링 적용
       obj.traverse(function(child) {
-        if (child.isMesh && child.material) {
-          child.material.side = THREE.DoubleSide;
+        if (child.isMesh) {
+          // 버텍스 컬러가 있으면 사용, 없으면 회색
+          if (child.geometry && child.geometry.attributes.color) {
+            child.material = new THREE.MeshPhongMaterial({
+              vertexColors: true,
+              side: THREE.DoubleSide
+            });
+            console.log('🎨 OBJ vertex colors detected');
+          } else {
+            child.material = new THREE.MeshPhongMaterial({
+              color: 0xdddddd,
+              side: THREE.DoubleSide
+            });
+          }
         }
       });
       scene.add(obj);
