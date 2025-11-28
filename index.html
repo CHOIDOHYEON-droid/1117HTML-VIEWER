@@ -1428,13 +1428,10 @@ The above copyright notice and this permission notice shall be included in all c
     // 터치 홀드 (0.2초)로 회전 중심 설정 + 시각적 피드백
     let touchTimer = null;
     let touchIndicator = null;
-    let touchStartPos = null;
-    const MOVE_THRESHOLD = 10; // 10px 이상 움직여야 취소
 
     dom.addEventListener('touchstart', function(e) {
       if (e.touches.length === 1) {
         const t = e.touches[0];
-        touchStartPos = { x: t.clientX, y: t.clientY };
 
         // 시각적 피드백: 홀드 표시 원 (파란색)
         touchIndicator = document.createElement('div');
@@ -1469,28 +1466,8 @@ The above copyright notice and this permission notice shall be included in all c
       }
     }, false);
 
-    // touchmove: 일정 거리 이상 움직여야 취소
-    dom.addEventListener('touchmove', function(e) {
-      if (touchStartPos && e.touches.length === 1) {
-        const t = e.touches[0];
-        const dx = Math.abs(t.clientX - touchStartPos.x);
-        const dy = Math.abs(t.clientY - touchStartPos.y);
-        if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
-          if (touchTimer) {
-            clearTimeout(touchTimer);
-            touchTimer = null;
-          }
-          if (touchIndicator && touchIndicator.parentNode) {
-            document.body.removeChild(touchIndicator);
-            touchIndicator = null;
-          }
-          touchStartPos = null;
-        }
-      }
-    }, false);
-
-    // touchend, touchcancel 시 취소
-    ['touchend', 'touchcancel'].forEach(function(ev) {
+    // touchend, touchcancel, touchmove 시 취소 (원본과 동일)
+    ['touchend', 'touchcancel', 'touchmove'].forEach(function(ev) {
       dom.addEventListener(ev, function() {
         if (touchTimer) {
           clearTimeout(touchTimer);
@@ -1500,7 +1477,6 @@ The above copyright notice and this permission notice shall be included in all c
           document.body.removeChild(touchIndicator);
           touchIndicator = null;
         }
-        touchStartPos = null;
       }, false);
     });
   }
