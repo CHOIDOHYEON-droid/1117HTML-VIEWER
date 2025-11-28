@@ -1688,7 +1688,7 @@ The above copyright notice and this permission notice shall be included in all c
 
   window.open3DFromFile = open3DFromFile;
 
-  // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 =====
+  // Base64 → ArrayBuffer
   function base64ToArrayBuffer(base64) {
     const binaryString = atob(base64);
     const len = binaryString.length;
@@ -1699,39 +1699,43 @@ The above copyright notice and this permission notice shall be included in all c
     return bytes.buffer;
   }
 
-  // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 (직접 파싱 버전) =====
-  // 메모리 효율을 위해 File/Blob/FileReader 경로 제거
-  // Base64 → ArrayBuffer/문자열 → 바로 Three.js 로더에 전달
-  function open3DFromBase64(base64, fileName) {
-    const ext = fileName.split('.').pop().toLowerCase();
-    const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
-
-    console.log('📂 [3D] open3DFromBase64:', fileName, 'ext:', ext);
-
-    try {
-      // 뷰어 초기화 + 오버레이 표시
-      init3DViewer();
-      clear3DScene();
-      show3DOverlay(displayName);
-
-      if (ext === 'stl' || ext === 'ply') {
-        // Base64 → ArrayBuffer → 바로 Three.js 로더에 전달
-        const buffer = base64ToArrayBuffer(base64);
-        console.log('📦 Buffer length:', buffer.byteLength);
-        load3DFromArrayBuffer(buffer, ext);
-      } else if (ext === 'obj') {
-        // OBJ는 텍스트 포맷 → Base64 → 문자열
-        const text = atob(base64);
-        console.log('📜 OBJ text length:', text.length);
-        loadOBJFromString(text);
-      } else {
-        alert('지원하지 않는 3D 확장자입니다: ' + ext);
-      }
-    } catch (e) {
-      console.error('❌ open3DFromBase64 error:', e);
-      alert('3D 파일을 불러오는 중 오류가 발생했습니다: ' + e.message);
-    }
+  // 확장자 기반 MIME 추측
+  function guessMimeType(fileName) {
+    const ext = (fileName.split('.').pop() || '').trim().toLowerCase();
+    if (ext === 'stl') return 'model/stl';
+    if (ext === 'ply') return 'model/ply';
+    if (ext === 'obj') return 'model/obj';
+    return 'application/octet-stream';
   }
+
+  // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 (래퍼 버전) =====
+  // Base64 → File/Blob 변환 후 open3DFromFile로 통일
+  function open3DFromBase64(base64, fileName) {
+    const safeName = fileName || 'unnamed';
+    console.log('📂 [3D] open3DFromBase64 wrapper:', safeName);
+
+    // Base64 → ArrayBuffer
+    const buffer = base64ToArrayBuffer(base64);
+    console.log('📦 Buffer length:', buffer.byteLength);
+
+    const mime = guessMimeType(safeName);
+
+    let file;
+    try {
+      // File 생성자 지원되는 경우
+      file = new File([buffer], safeName, { type: mime });
+    } catch (e) {
+      // iOS Safari/WebView 구버전 대응: Blob + name 속성
+      const blob = new Blob([buffer], { type: mime });
+      blob.name = safeName;
+      file = blob;
+    }
+
+    // 브라우저와 동일한 코드 경로로 강제 통일
+    window.open3DFromFile(file);
+  }
+
+  window.open3DFromBase64 = open3DFromBase64;
 
   // ===== 닫기 =====
   window.close3DViewer = function() {
@@ -1755,9 +1759,6 @@ The above copyright notice and this permission notice shall be included in all c
       container.style.display = 'block';
     }
   };
-
-  // 전역 노출 (open3DFromBase64만 - open3DFromFile은 함수 정의 바로 아래에서 노출)
-  window.open3DFromBase64 = open3DFromBase64;
 </script>
 
 </body>
