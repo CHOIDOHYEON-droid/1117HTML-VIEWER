@@ -1431,7 +1431,7 @@ The above copyright notice and this permission notice shall be included in all c
           const loader = new THREE.STLLoader();
           const geometry = loader.parse(buffer);
           console.log('🧱 STL geometry:', geometry);
-          const material = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+          const material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
           const mesh = new THREE.Mesh(geometry, material);
           scene.add(mesh);
           fitCameraToObject(mesh);
@@ -1443,10 +1443,10 @@ The above copyright notice and this permission notice shall be included in all c
           // 버텍스 컬러가 있으면 원본 색상 사용
           let material;
           if (geometry.attributes.color) {
-            material = new THREE.MeshPhongMaterial({ vertexColors: true });
+            material = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide });
             console.log('🎨 PLY vertex colors detected');
           } else {
-            material = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+            material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
           }
           const mesh = new THREE.Mesh(geometry, material);
           scene.add(mesh);
@@ -1461,6 +1461,12 @@ The above copyright notice and this permission notice shall be included in all c
         const loader = new THREE.OBJLoader();
         const obj = loader.parse(text);
         console.log('🧱 OBJ object:', obj);
+        // OBJ의 모든 메시에 양면 렌더링 적용
+        obj.traverse(function(child) {
+          if (child.isMesh && child.material) {
+            child.material.side = THREE.DoubleSide;
+          }
+        });
         scene.add(obj);
         fitCameraToObject(obj);
       };
@@ -1494,7 +1500,7 @@ The above copyright notice and this permission notice shall be included in all c
       const loader = new THREE.STLLoader();
       const geometry = loader.parse(buffer);
       console.log('🧱 STL geometry (base64):', geometry);
-      const material = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+      const material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
       const mesh = new THREE.Mesh(geometry, material);
       scene.add(mesh);
       fitCameraToObject(mesh);
@@ -1506,10 +1512,10 @@ The above copyright notice and this permission notice shall be included in all c
       // 버텍스 컬러가 있으면 원본 색상 사용
       let material;
       if (geometry.attributes.color) {
-        material = new THREE.MeshPhongMaterial({ vertexColors: true });
+        material = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide });
         console.log('🎨 PLY vertex colors detected');
       } else {
-        material = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+        material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
       }
       const mesh = new THREE.Mesh(geometry, material);
       scene.add(mesh);
@@ -1520,6 +1526,12 @@ The above copyright notice and this permission notice shall be included in all c
       const loader = new THREE.OBJLoader();
       const obj = loader.parse(text);
       console.log('🧱 OBJ object (base64):', obj);
+      // OBJ의 모든 메시에 양면 렌더링 적용
+      obj.traverse(function(child) {
+        if (child.isMesh && child.material) {
+          child.material.side = THREE.DoubleSide;
+        }
+      });
       scene.add(obj);
       fitCameraToObject(obj);
     } else {
