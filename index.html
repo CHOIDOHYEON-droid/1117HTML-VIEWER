@@ -1203,6 +1203,10 @@ The above copyright notice and this permission notice shall be included in all c
     const htmlOverlay = document.getElementById('htmlViewer');
     if (htmlOverlay) htmlOverlay.classList.remove('active');
 
+    // 로딩 화면 숨기기
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) loadingScreen.classList.add('hidden');
+
     // 오버레이 표시 후 controls screen 업데이트
     setTimeout(function() {
       if (controls && renderer) {
