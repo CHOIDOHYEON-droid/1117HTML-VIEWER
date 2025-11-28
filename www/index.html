@@ -1181,7 +1181,10 @@ The above copyright notice and this permission notice shall be included in all c
     <div id="viewer3DOverlay" class="viewer-3d-overlay">
         <div class="viewer-header">
             <span class="viewer-title" id="viewer3DTitle">3D 파일</span>
-            <button class="viewer-close" onclick="close3DViewer()">닫기</button>
+            <div>
+                <button class="viewer-close" onclick="close3DViewer()">닫기</button>
+                <button class="viewer-info-btn" onclick="openInfoModal()">ⓘ</button>
+            </div>
         </div>
         <div id="viewer-3d" class="viewer-3d-container"></div>
     </div>
@@ -1354,6 +1357,37 @@ The above copyright notice and this permission notice shall be included in all c
         focusToPoint(e.clientX, e.clientY);
       }
     }, false);
+
+    // 터치 홀드(길게 누르기)로 회전 중심 설정
+    let touchTimer = null;
+    let touchStartPos = null;
+
+    dom.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        touchTimer = setTimeout(function() {
+          if (touchStartPos) {
+            focusToPoint(touchStartPos.x, touchStartPos.y);
+          }
+        }, 500); // 500ms 홀드
+      }
+    }, { passive: true });
+
+    dom.addEventListener('touchmove', function(e) {
+      // 움직이면 타이머 취소
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    }, { passive: true });
+
+    dom.addEventListener('touchend', function(e) {
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+      touchStartPos = null;
+    }, { passive: true });
   }
 
   function on3DWindowResize() {
@@ -1465,22 +1499,13 @@ The above copyright notice and this permission notice shall be included in all c
         const loader = new THREE.OBJLoader();
         const obj = loader.parse(text);
         console.log('🧱 OBJ object:', obj);
-        // OBJ의 모든 메시에 색상 및 양면 렌더링 적용
+        // OBJ는 버텍스 컬러를 지원하지 않으므로 회색 적용
         obj.traverse(function(child) {
           if (child.isMesh) {
-            // 버텍스 컬러가 있으면 사용, 없으면 회색
-            if (child.geometry && child.geometry.attributes.color) {
-              child.material = new THREE.MeshPhongMaterial({
-                vertexColors: true,
-                side: THREE.DoubleSide
-              });
-              console.log('🎨 OBJ vertex colors detected');
-            } else {
-              child.material = new THREE.MeshPhongMaterial({
-                color: 0xdddddd,
-                side: THREE.DoubleSide
-              });
-            }
+            child.material = new THREE.MeshPhongMaterial({
+              color: 0xdddddd,
+              side: THREE.DoubleSide
+            });
           }
         });
         scene.add(obj);
@@ -1582,6 +1607,12 @@ The above copyright notice and this permission notice shall be included in all c
     }
     camera = null;
     controls = null;
+
+    // 메인 화면 표시
+    const container = document.querySelector('.container');
+    if (container) {
+      container.style.display = 'block';
+    }
   };
 
   // 전역 노출 (기존 코드에서 이걸 사용중)
