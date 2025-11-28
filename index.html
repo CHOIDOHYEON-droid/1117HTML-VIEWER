@@ -1400,11 +1400,15 @@ The above copyright notice and this permission notice shall be included in all c
     // 터치 홀드 (0.2초)로 회전 중심 설정 + 시각적 피드백
     let touchTimer = null;
     let touchIndicator = null;
+    let touchStartPos = null;
 
     dom.addEventListener('touchstart', function(e) {
       if (e.touches.length === 1) {
         const t = e.touches[0];
         console.log('👆 Touch start at:', t.clientX, t.clientY);
+
+        // 시작 위치 저장 (이동 감지용)
+        touchStartPos = { x: t.clientX, y: t.clientY };
 
         // 시각적 피드백: 홀드 표시 원 (파란색)
         touchIndicator = document.createElement('div');
@@ -1441,8 +1445,8 @@ The above copyright notice and this permission notice shall be included in all c
       }
     }, false);
 
-    // touchend, touchcancel, touchmove 시 취소 (원본과 동일)
-    ['touchend', 'touchcancel', 'touchmove'].forEach(function(ev) {
+    // touchend, touchcancel 시 취소
+    ['touchend', 'touchcancel'].forEach(function(ev) {
       dom.addEventListener(ev, function() {
         if (touchTimer) {
           clearTimeout(touchTimer);
@@ -1452,8 +1456,32 @@ The above copyright notice and this permission notice shall be included in all c
           document.body.removeChild(touchIndicator);
           touchIndicator = null;
         }
+        touchStartPos = null;
       }, false);
     });
+
+    // touchmove 시 일정 거리 이상 이동하면 취소 (iOS 미세 떨림 무시)
+    dom.addEventListener('touchmove', function(e) {
+      if (touchStartPos && e.touches.length === 1) {
+        const t = e.touches[0];
+        const dx = t.clientX - touchStartPos.x;
+        const dy = t.clientY - touchStartPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // 5px 이상 이동 시에만 취소
+        if (distance > 5) {
+          if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+          }
+          if (touchIndicator && touchIndicator.parentNode) {
+            document.body.removeChild(touchIndicator);
+            touchIndicator = null;
+          }
+          touchStartPos = null;
+        }
+      }
+    }, false);
   }
 
   function on3DWindowResize() {
