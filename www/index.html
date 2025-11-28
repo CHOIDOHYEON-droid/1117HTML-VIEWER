@@ -1386,38 +1386,12 @@ The above copyright notice and this permission notice shall be included in all c
   }
 
   // 터치 홀드 이벤트 중복 등록 방지 플래그
-  let focusEventsBound = false;
+  let focusEventsEnabled = false;
 
   function enableFocusEvents() {
-    if (focusEventsBound) return; // 여러 번 init되어도 한 번만 등록
-    if (!renderer) return;
+    if (focusEventsEnabled) return;
+    focusEventsEnabled = true;
 
-    const canvas = renderer.domElement;
-    focusEventsBound = true;
-
-    // 이 이벤트가 3D 캔버스/컨테이너에서 온 것인지 확인하는 헬퍼
-    function isFrom3DViewer(target) {
-      if (!target) return false;
-      if (target === canvas) return true;
-      if (target.closest) {
-        return !!target.closest('#viewer-3d');
-      }
-      return false;
-    }
-
-    // 마우스 중간 버튼(휠 클릭) 회전 중심
-    document.addEventListener(
-      'mousedown',
-      function (e) {
-        if (e.button !== 1) return;
-        if (!isFrom3DViewer(e.target)) return;
-        e.preventDefault();
-        focusToPoint(e.clientX, e.clientY);
-      },
-      false
-    );
-
-    // 터치 홀드 관련 상태
     let touchTimer = null;
     let touchIndicator = null;
     let touchStartPos = null;
@@ -1434,75 +1408,82 @@ The above copyright notice and this permission notice shall be included in all c
       touchStartPos = null;
     }
 
-    // touchstart: 파란 원 + 홀드 타이머
-    document.addEventListener(
-      'touchstart',
-      function (e) {
-        if (e.touches.length !== 1) return;
-        const t = e.touches[0];
-        if (!isFrom3DViewer(e.target)) return;
+    function isFrom3DViewer(target) {
+      if (!renderer || !renderer.domElement) return false;
+      if (!target) return false;
+      if (target === renderer.domElement) return true;
+      if (target.closest) {
+        return !!target.closest('#viewer-3d');
+      }
+      return false;
+    }
 
-        console.log('👆 Touch start at:', t.clientX, t.clientY);
+    // 마우스 중간 버튼(휠 클릭) 회전 중심
+    document.addEventListener('mousedown', function (e) {
+      if (e.button !== 1) return;
+      if (!isFrom3DViewer(e.target)) return;
+      e.preventDefault();
+      focusToPoint(e.clientX, e.clientY);
+    }, false);
 
-        touchStartPos = { x: t.clientX, y: t.clientY };
+    // 터치 홀드: 파란 → 초록 원
+    document.addEventListener('touchstart', function (e) {
+      if (!renderer || !camera || !controls) return;
+      if (e.touches.length !== 1) return;
+      if (!isFrom3DViewer(e.target)) return;
 
-        touchIndicator = document.createElement('div');
-        touchIndicator.style.cssText = `
-          position: fixed;
-          left: ${t.clientX - 20}px;
-          top: ${t.clientY - 20}px;
-          width: 40px;
-          height: 40px;
-          border: 3px solid #2196F3;
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 9999;
-          animation: pulse 0.2s ease-out;
-        `;
-        document.body.appendChild(touchIndicator);
+      const t = e.touches[0];
+      console.log('👆 Touch start at:', t.clientX, t.clientY);
 
-        touchTimer = setTimeout(function () {
-          console.log('✅ Touch hold completed - setting focus point');
-          focusToPoint(t.clientX, t.clientY);
-          if (touchIndicator) {
-            console.log('🟢 Changing to green');
-            touchIndicator.style.borderColor = '#4CAF50';
-            touchIndicator.style.transform = 'scale(1.3)';
-            setTimeout(clearTouchIndicator, 300);
-          }
-        }, 200); // 200ms 홀드
-      },
-      false
-    );
+      touchStartPos = { x: t.clientX, y: t.clientY };
 
-    // touchmove: 5px 이상 움직이면 취소
-    document.addEventListener(
-      'touchmove',
-      function (e) {
-        if (!touchStartPos || e.touches.length !== 1) return;
-        const t = e.touches[0];
-        if (!isFrom3DViewer(e.target)) return;
+      touchIndicator = document.createElement('div');
+      touchIndicator.style.cssText = `
+        position: fixed;
+        left: ${t.clientX - 20}px;
+        top: ${t.clientY - 20}px;
+        width: 40px;
+        height: 40px;
+        border: 3px solid #2196F3;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        animation: pulse 0.2s ease-out;
+      `;
+      document.body.appendChild(touchIndicator);
 
-        const dx = t.clientX - touchStartPos.x;
-        const dy = t.clientY - touchStartPos.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance > 5) {
-          clearTouchIndicator();
+      touchTimer = setTimeout(function () {
+        console.log('✅ Touch hold completed - setting focus point');
+        focusToPoint(t.clientX, t.clientY);
+        if (touchIndicator) {
+          console.log('🟢 Changing to green');
+          touchIndicator.style.borderColor = '#4CAF50';
+          touchIndicator.style.transform = 'scale(1.3)';
+          setTimeout(clearTouchIndicator, 300);
         }
-      },
-      false
-    );
+      }, 200); // 200ms 홀드
+    }, { passive: true });
+
+    // touchmove: 5px 이상 이동 시 취소
+    document.addEventListener('touchmove', function (e) {
+      if (!touchStartPos || e.touches.length !== 1) return;
+      if (!isFrom3DViewer(e.target)) return;
+
+      const t = e.touches[0];
+      const dx = t.clientX - touchStartPos.x;
+      const dy = t.clientY - touchStartPos.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 5) {
+        clearTouchIndicator();
+      }
+    }, { passive: true });
 
     // touchend / touchcancel: 정리
     ['touchend', 'touchcancel'].forEach(function (ev) {
-      document.addEventListener(
-        ev,
-        function () {
-          clearTouchIndicator();
-        },
-        false
-      );
+      document.addEventListener(ev, function () {
+        clearTouchIndicator();
+      }, { passive: true });
     });
   }
 
