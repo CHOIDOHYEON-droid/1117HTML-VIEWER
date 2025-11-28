@@ -1493,11 +1493,13 @@ The above copyright notice and this permission notice shall be included in all c
       alert('파일을 읽을 수 없습니다.');
     };
 
-    if (ext === 'stl') {
-      reader.onload = e => {
-        try {
-          const buffer = e.target.result;
-          console.log('📥 STL ArrayBuffer 길이:', buffer.byteLength);
+    // 모든 3D 파일을 ArrayBuffer로 통일하여 읽기
+    reader.onload = e => {
+      try {
+        const buffer = e.target.result;
+        console.log('📥 ArrayBuffer 길이:', buffer.byteLength, 'ext:', ext);
+
+        if (ext === 'stl') {
           const loader = new THREE.STLLoader();
           const geometry = loader.parse(buffer);
           console.log('🧱 STL geometry:', geometry);
@@ -1506,17 +1508,7 @@ The above copyright notice and this permission notice shall be included in all c
           scene.add(mesh);
           fitCameraToObject(mesh);
           console.log('✅ STL 로드 완료');
-        } catch (err) {
-          console.error('❌ STL 파싱 오류:', err);
-          alert('STL 파일 로드 실패: ' + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (ext === 'ply') {
-      reader.onload = e => {
-        try {
-          const buffer = e.target.result;
-          console.log('📥 PLY ArrayBuffer 길이:', buffer.byteLength);
+        } else if (ext === 'ply') {
           const loader = new THREE.PLYLoader();
           const geometry = loader.parse(buffer);
           geometry.computeVertexNormals();
@@ -1533,16 +1525,9 @@ The above copyright notice and this permission notice shall be included in all c
           scene.add(mesh);
           fitCameraToObject(mesh);
           console.log('✅ PLY 로드 완료');
-        } catch (err) {
-          console.error('❌ PLY 파싱 오류:', err);
-          alert('PLY 파일 로드 실패: ' + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (ext === 'obj') {
-      reader.onload = e => {
-        try {
-          const text = e.target.result;
+        } else if (ext === 'obj') {
+          // OBJ는 텍스트 형식이므로 ArrayBuffer를 텍스트로 변환
+          const text = new TextDecoder().decode(new Uint8Array(buffer));
           console.log('📥 OBJ text length:', text.length);
           const loader = new THREE.OBJLoader();
           const obj = loader.parse(text);
@@ -1559,12 +1544,15 @@ The above copyright notice and this permission notice shall be included in all c
           scene.add(obj);
           fitCameraToObject(obj);
           console.log('✅ OBJ 로드 완료');
-        } catch (err) {
-          console.error('❌ OBJ 파싱 오류:', err);
-          alert('OBJ 파일 로드 실패: ' + err.message);
         }
-      };
-      reader.readAsText(file);
+      } catch (err) {
+        console.error('❌ 3D 파일 파싱 오류:', err);
+        alert('3D 파일 로드 실패: ' + err.message);
+      }
+    };
+
+    if (ext === 'stl' || ext === 'ply' || ext === 'obj') {
+      reader.readAsArrayBuffer(file);
     } else {
       alert('지원하지 않는 3D 형식입니다: ' + ext);
     }
