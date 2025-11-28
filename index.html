@@ -1617,96 +1617,69 @@ The above copyright notice and this permission notice shall be included in all c
     return bytes.buffer;
   }
 
+  // ✅ iOS / PWA용: Base64로 받은 3D 파일 열기
   function open3DFromBase64(base64, fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
     console.log('📂 [3D] open3DFromBase64', fileName, 'ext:', ext);
 
-    // 디버그 alert
-    alert('open3DFromBase64 호출됨\n파일: ' + fileName + '\nBase64 길이: ' + (base64 ? base64.length : 0));
-
     // 파일명 표시 (20자 제한)
     const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
 
-    try {
-      init3DViewer();
-      clear3DScene();
-      show3DOverlay(displayName);
-    } catch (err) {
-      console.error('❌ 3D 뷰어 초기화 오류:', err);
-      alert('3D 뷰어 초기화 실패: ' + err.message);
-      return;
-    }
+    init3DViewer();
+    clear3DScene();
+    show3DOverlay(displayName);
 
-    let buffer;
-    try {
-      buffer = base64ToArrayBuffer(base64);
-      console.log('📥 Base64 변환 완료, 버퍼 크기:', buffer.byteLength);
-      alert('Buffer 변환 완료: ' + buffer.byteLength + ' bytes');
-    } catch (err) {
-      console.error('❌ Base64 변환 오류:', err);
-      alert('파일 데이터 변환 실패: ' + err.message);
-      return;
-    }
+    const buffer = base64ToArrayBuffer(base64);
+    console.log('📥 Base64 변환 완료, 버퍼 크기:', buffer.byteLength);
 
     if (ext === 'stl') {
-      try {
-        const loader = new THREE.STLLoader();
-        const geometry = loader.parse(buffer);
-        console.log('🧱 STL geometry (base64):', geometry);
-        const material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-        fitCameraToObject(mesh);
-        console.log('✅ STL 로드 완료 (base64)');
-      } catch (err) {
-        console.error('❌ STL 파싱 오류:', err);
-        alert('STL 파일 로드 실패: ' + err.message);
-      }
+      const loader = new THREE.STLLoader();
+      const geometry = loader.parse(buffer);
+      console.log('🧱 STL geometry (base64):', geometry);
+
+      const material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      fitCameraToObject(mesh);
+      console.log('✅ STL 로드 완료 (base64)');
     } else if (ext === 'ply') {
-      try {
-        const loader = new THREE.PLYLoader();
-        const geometry = loader.parse(buffer);
-        geometry.computeVertexNormals();
-        console.log('🧱 PLY geometry (base64):', geometry);
-        // 버텍스 컬러가 있으면 원본 색상 사용
-        let material;
-        if (geometry.attributes.color) {
-          material = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide });
-          console.log('🎨 PLY vertex colors detected');
-        } else {
-          material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
-        }
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-        fitCameraToObject(mesh);
-        console.log('✅ PLY 로드 완료 (base64)');
-      } catch (err) {
-        console.error('❌ PLY 파싱 오류:', err);
-        alert('PLY 파일 로드 실패: ' + err.message);
+      const loader = new THREE.PLYLoader();
+      const geometry = loader.parse(buffer);
+      geometry.computeVertexNormals();
+      console.log('🧱 PLY geometry (base64):', geometry);
+
+      // 버텍스 컬러가 있으면 원본 색상 사용
+      let material;
+      if (geometry.attributes.color) {
+        material = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide });
+        console.log('🎨 PLY vertex colors detected');
+      } else {
+        material = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
       }
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      fitCameraToObject(mesh);
+      console.log('✅ PLY 로드 완료 (base64)');
     } else if (ext === 'obj') {
-      try {
-        const text = new TextDecoder().decode(new Uint8Array(buffer));
-        console.log('📥 OBJ text length (base64):', text.length);
-        const loader = new THREE.OBJLoader();
-        const obj = loader.parse(text);
-        console.log('🧱 OBJ object (base64):', obj);
-        // OBJ의 모든 메시에 색상 및 양면 렌더링 적용
-        obj.traverse(function(child) {
-          if (child.isMesh) {
-            child.material = new THREE.MeshPhongMaterial({
-              color: 0xdddddd,
-              side: THREE.DoubleSide
-            });
-          }
-        });
-        scene.add(obj);
-        fitCameraToObject(obj);
-        console.log('✅ OBJ 로드 완료 (base64)');
-      } catch (err) {
-        console.error('❌ OBJ 파싱 오류:', err);
-        alert('OBJ 파일 로드 실패: ' + err.message);
-      }
+      const text = new TextDecoder().decode(new Uint8Array(buffer));
+      console.log('📥 OBJ text length (base64):', text.length);
+
+      const loader = new THREE.OBJLoader();
+      const obj = loader.parse(text);
+      console.log('🧱 OBJ object (base64):', obj);
+
+      // OBJ의 모든 메시에 색상 및 양면 렌더링 적용
+      obj.traverse(function(child) {
+        if (child.isMesh) {
+          child.material = new THREE.MeshPhongMaterial({
+            color: 0xdddddd,
+            side: THREE.DoubleSide
+          });
+        }
+      });
+      scene.add(obj);
+      fitCameraToObject(obj);
+      console.log('✅ OBJ 로드 완료 (base64)');
     } else {
       alert('지원하지 않는 3D 형식입니다: ' + ext);
     }
