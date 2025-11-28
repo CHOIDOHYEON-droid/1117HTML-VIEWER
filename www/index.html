@@ -1670,37 +1670,38 @@ The above copyright notice and this permission notice shall be included in all c
     return bytes.buffer;
   }
 
-  // MIME 타입 추측 헬퍼
-  function guessMimeType(fileName) {
-    const ext = fileName.split('.').pop().toLowerCase();
-    if (ext === 'stl') return 'model/stl';
-    if (ext === 'ply') return 'model/ply';
-    if (ext === 'obj') return 'model/obj';
-    return 'application/octet-stream';
-  }
-
-  // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 (통합 버전) =====
-  // Base64 → File 객체 변환 후 open3DFromFile 호출하여 경로 통일
+  // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 (직접 파싱 버전) =====
+  // 메모리 효율을 위해 File/Blob/FileReader 경로 제거
+  // Base64 → ArrayBuffer/문자열 → 바로 Three.js 로더에 전달
   function open3DFromBase64(base64, fileName) {
-    console.log('📂 [3D] open3DFromBase64 wrapper:', fileName);
+    const ext = fileName.split('.').pop().toLowerCase();
+    const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
 
-    // Base64 → ArrayBuffer 변환
-    const buffer = base64ToArrayBuffer(base64);
-    const mime = guessMimeType(fileName);
+    console.log('📂 [3D] open3DFromBase64:', fileName, 'ext:', ext);
 
-    // File 객체 생성 (iOS Safari 호환성을 위해 Blob fallback)
-    let file;
     try {
-      file = new File([buffer], fileName, { type: mime });
-    } catch (e) {
-      // iOS Safari 구버전에서 File 생성자 미지원 시 Blob 사용
-      const blob = new Blob([buffer], { type: mime });
-      blob.name = fileName;
-      file = blob;
-    }
+      // 뷰어 초기화 + 오버레이 표시
+      init3DViewer();
+      clear3DScene();
+      show3DOverlay(displayName);
 
-    // 통일된 경로로 호출 - 브라우저와 동일한 코드 경로 사용
-    window.open3DFromFile(file);
+      if (ext === 'stl' || ext === 'ply') {
+        // Base64 → ArrayBuffer → 바로 Three.js 로더에 전달
+        const buffer = base64ToArrayBuffer(base64);
+        console.log('📦 Buffer length:', buffer.byteLength);
+        load3DFromArrayBuffer(buffer, ext);
+      } else if (ext === 'obj') {
+        // OBJ는 텍스트 포맷 → Base64 → 문자열
+        const text = atob(base64);
+        console.log('📜 OBJ text length:', text.length);
+        loadOBJFromString(text);
+      } else {
+        alert('지원하지 않는 3D 확장자입니다: ' + ext);
+      }
+    } catch (e) {
+      console.error('❌ open3DFromBase64 error:', e);
+      alert('3D 파일을 불러오는 중 오류가 발생했습니다: ' + e.message);
+    }
   }
 
   // ===== 닫기 =====
