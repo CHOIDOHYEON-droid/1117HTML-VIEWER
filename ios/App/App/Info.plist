@@ -68,6 +68,10 @@
 				<string>com.dlas.viewer.stl</string>
 				<string>com.dlas.viewer.ply</string>
 				<string>com.dlas.viewer.obj</string>
+				<string>public.standard-tesselated-geometry-format</string>
+				<string>public.geometry-definition-format</string>
+				<string>public.data</string>
+				<string>public.item</string>
 			</array>
 		</dict>
 	</array>
@@ -130,6 +134,7 @@
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
+				<string>public.3d-content</string>
 			</array>
 			<key>UTTypeTagSpecification</key>
 			<dict>
@@ -138,7 +143,12 @@
 					<string>stl</string>
 				</array>
 				<key>public.mime-type</key>
-				<string>model/stl</string>
+				<array>
+					<string>model/stl</string>
+					<string>application/sla</string>
+					<string>application/vnd.ms-pki.stl</string>
+					<string>application/octet-stream</string>
+				</array>
 			</dict>
 		</dict>
 		<dict>
@@ -149,6 +159,7 @@
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
+				<string>public.3d-content</string>
 			</array>
 			<key>UTTypeTagSpecification</key>
 			<dict>
@@ -157,7 +168,11 @@
 					<string>ply</string>
 				</array>
 				<key>public.mime-type</key>
-				<string>model/ply</string>
+				<array>
+					<string>model/ply</string>
+					<string>application/ply</string>
+					<string>application/octet-stream</string>
+				</array>
 			</dict>
 		</dict>
 		<dict>
@@ -168,6 +183,7 @@
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
+				<string>public.3d-content</string>
 			</array>
 			<key>UTTypeTagSpecification</key>
 			<dict>
@@ -176,7 +192,11 @@
 					<string>obj</string>
 				</array>
 				<key>public.mime-type</key>
-				<string>model/obj</string>
+				<array>
+					<string>model/obj</string>
+					<string>text/plain</string>
+					<string>application/octet-stream</string>
+				</array>
 			</dict>
 		</dict>
 	</array>
