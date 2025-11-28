@@ -1385,32 +1385,67 @@ The above copyright notice and this permission notice shall be included in all c
     requestAnimationFrame(animStep);
   }
 
-  function enableFocusEvents() {
-    if (!renderer) return;
-    const dom = renderer.domElement;
+  // 터치 홀드 이벤트 중복 등록 방지 플래그
+  let focusEventsBound = false;
 
-    // 마우스 중간 버튼(휠 클릭)으로 회전 중심 설정
-    dom.addEventListener('mousedown', function(e) {
-      if (e.button === 1) {
+  function enableFocusEvents() {
+    if (focusEventsBound) return; // 여러 번 init되어도 한 번만 등록
+    if (!renderer) return;
+
+    const canvas = renderer.domElement;
+    focusEventsBound = true;
+
+    // 이 이벤트가 3D 캔버스/컨테이너에서 온 것인지 확인하는 헬퍼
+    function isFrom3DViewer(target) {
+      if (!target) return false;
+      if (target === canvas) return true;
+      if (target.closest) {
+        return !!target.closest('#viewer-3d');
+      }
+      return false;
+    }
+
+    // 마우스 중간 버튼(휠 클릭) 회전 중심
+    document.addEventListener(
+      'mousedown',
+      function (e) {
+        if (e.button !== 1) return;
+        if (!isFrom3DViewer(e.target)) return;
         e.preventDefault();
         focusToPoint(e.clientX, e.clientY);
-      }
-    }, false);
+      },
+      false
+    );
 
-    // 터치 홀드 (0.2초)로 회전 중심 설정 + 시각적 피드백
+    // 터치 홀드 관련 상태
     let touchTimer = null;
     let touchIndicator = null;
     let touchStartPos = null;
 
-    dom.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 1) {
+    function clearTouchIndicator() {
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+      if (touchIndicator && touchIndicator.parentNode) {
+        document.body.removeChild(touchIndicator);
+        touchIndicator = null;
+      }
+      touchStartPos = null;
+    }
+
+    // touchstart: 파란 원 + 홀드 타이머
+    document.addEventListener(
+      'touchstart',
+      function (e) {
+        if (e.touches.length !== 1) return;
         const t = e.touches[0];
+        if (!isFrom3DViewer(e.target)) return;
+
         console.log('👆 Touch start at:', t.clientX, t.clientY);
 
-        // 시작 위치 저장 (이동 감지용)
         touchStartPos = { x: t.clientX, y: t.clientY };
 
-        // 시각적 피드백: 홀드 표시 원 (파란색)
         touchIndicator = document.createElement('div');
         touchIndicator.style.cssText = `
           position: fixed;
@@ -1426,62 +1461,49 @@ The above copyright notice and this permission notice shall be included in all c
         `;
         document.body.appendChild(touchIndicator);
 
-        touchTimer = setTimeout(function() {
+        touchTimer = setTimeout(function () {
           console.log('✅ Touch hold completed - setting focus point');
           focusToPoint(t.clientX, t.clientY);
           if (touchIndicator) {
-            // 초록색으로 변경하고 확대
             console.log('🟢 Changing to green');
             touchIndicator.style.borderColor = '#4CAF50';
             touchIndicator.style.transform = 'scale(1.3)';
-            setTimeout(function() {
-              if (touchIndicator && touchIndicator.parentNode) {
-                document.body.removeChild(touchIndicator);
-              }
-              touchIndicator = null;
-            }, 300);
+            setTimeout(clearTouchIndicator, 300);
           }
         }, 200); // 200ms 홀드
-      }
-    }, false);
+      },
+      false
+    );
 
-    // touchend, touchcancel 시 취소
-    ['touchend', 'touchcancel'].forEach(function(ev) {
-      dom.addEventListener(ev, function() {
-        if (touchTimer) {
-          clearTimeout(touchTimer);
-          touchTimer = null;
-        }
-        if (touchIndicator && touchIndicator.parentNode) {
-          document.body.removeChild(touchIndicator);
-          touchIndicator = null;
-        }
-        touchStartPos = null;
-      }, false);
-    });
-
-    // touchmove 시 일정 거리 이상 이동하면 취소 (iOS 미세 떨림 무시)
-    dom.addEventListener('touchmove', function(e) {
-      if (touchStartPos && e.touches.length === 1) {
+    // touchmove: 5px 이상 움직이면 취소
+    document.addEventListener(
+      'touchmove',
+      function (e) {
+        if (!touchStartPos || e.touches.length !== 1) return;
         const t = e.touches[0];
+        if (!isFrom3DViewer(e.target)) return;
+
         const dx = t.clientX - touchStartPos.x;
         const dy = t.clientY - touchStartPos.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // 5px 이상 이동 시에만 취소
         if (distance > 5) {
-          if (touchTimer) {
-            clearTimeout(touchTimer);
-            touchTimer = null;
-          }
-          if (touchIndicator && touchIndicator.parentNode) {
-            document.body.removeChild(touchIndicator);
-            touchIndicator = null;
-          }
-          touchStartPos = null;
+          clearTouchIndicator();
         }
-      }
-    }, false);
+      },
+      false
+    );
+
+    // touchend / touchcancel: 정리
+    ['touchend', 'touchcancel'].forEach(function (ev) {
+      document.addEventListener(
+        ev,
+        function () {
+          clearTouchIndicator();
+        },
+        false
+      );
+    });
   }
 
   function on3DWindowResize() {
