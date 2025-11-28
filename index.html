@@ -1629,17 +1629,18 @@ The above copyright notice and this permission notice shall be included in all c
     console.log('✅ OBJ 로드 완료');
   }
 
-  // ===== 브라우저용: File 객체에서 직접 열기 =====
+  // ===== 브라우저/앱 공통: File/Blob 객체에서 3D 파일 열기 =====
   function open3DFromFile(file) {
-    const ext = file.name.split('.').pop().toLowerCase();
-    console.log('📂 [3D] open3DFromFile', file.name, 'ext:', ext);
+    if (!file) return;
 
-    // 파일명 표시 (20자 제한)
-    const displayName = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+    const fileName = file.name || 'unnamed';
+    const ext = (fileName.split('.').pop() || '').trim().toLowerCase();
+    const displayName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
+
+    console.log('📂 [3D] open3DFromFile', fileName, 'ext:', ext);
 
     try {
       init3DViewer();
-      clear3DScene();
       show3DOverlay(displayName);
     } catch (err) {
       console.error('❌ 3D 뷰어 초기화 오류:', err);
@@ -1647,9 +1648,11 @@ The above copyright notice and this permission notice shall be included in all c
       return;
     }
 
+    clear3DScene();
+
     const reader = new FileReader();
 
-    reader.onerror = function(e) {
+    reader.onerror = function (e) {
       console.error('❌ 파일 읽기 오류:', e);
       alert('파일을 읽을 수 없습니다.');
     };
@@ -1658,6 +1661,7 @@ The above copyright notice and this permission notice shall be included in all c
       reader.onload = e => {
         try {
           const buffer = e.target.result;
+          console.log('📦 ArrayBuffer length:', buffer.byteLength);
           load3DFromArrayBuffer(buffer, ext);
         } catch (err) {
           console.error('❌ 3D 파일 파싱 오류:', err);
@@ -1669,6 +1673,7 @@ The above copyright notice and this permission notice shall be included in all c
       reader.onload = e => {
         try {
           const text = e.target.result;
+          console.log('📜 OBJ text length:', text.length);
           loadOBJFromString(text);
         } catch (err) {
           console.error('❌ OBJ 파일 파싱 오류:', err);
@@ -1680,6 +1685,8 @@ The above copyright notice and this permission notice shall be included in all c
       alert('지원하지 않는 3D 형식입니다: ' + ext);
     }
   }
+
+  window.open3DFromFile = open3DFromFile;
 
   // ===== iOS/PWA용: Base64로 받은 3D 파일 열기 =====
   function base64ToArrayBuffer(base64) {
@@ -1749,8 +1756,7 @@ The above copyright notice and this permission notice shall be included in all c
     }
   };
 
-  // 전역 노출 (기존 코드에서 이걸 사용중)
-  window.open3DFromFile = open3DFromFile;
+  // 전역 노출 (open3DFromBase64만 - open3DFromFile은 함수 정의 바로 아래에서 노출)
   window.open3DFromBase64 = open3DFromBase64;
 </script>
 
