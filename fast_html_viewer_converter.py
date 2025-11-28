@@ -1161,9 +1161,8 @@ const PASSWORD_ENABLED = $password_enabled;
     #topButtons button{font-size:14px;padding:8px 14px;min-height:44px;}
     #addAnnoBtn{top:10px;right:10px;font-size:15px;padding:10px 16px;min-height:44px;}
 
-    /* 모바일에서는 Save, Annotation, View 버튼 숨김 */
+    /* 모바일에서는 Save, View 버튼 숨김 (Annotation은 표시) */
     #topButtons{display:none;}
-    #addAnnoBtn{display:none;}
     #viewSavePanel{display:none;}
 
     /* 홈 버튼: 우측 하단으로 이동 */
